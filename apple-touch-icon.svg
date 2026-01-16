@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180">
+  <rect width="180" height="180" rx="40" fill="#1a1a2e"/>
+  <circle cx="90" cy="80" r="62" fill="#c41e3a"/>
+  <path d="M90 28 L99 52 L123 42 L113 66 L137 75 L113 84 L123 108 L99 98 L90 122 L81 98 L57 108 L67 84 L43 75 L67 66 L57 42 L81 52 Z" fill="#f5f5f5"/>
+  <circle cx="90" cy="80" r="14" fill="#c41e3a"/>
+  <text x="90" y="156" font-family="ui-sans-serif,system-ui" font-size="20" text-anchor="middle" fill="#ffffff" font-weight="900" letter-spacing="3">MALTISH</text>
+</svg>

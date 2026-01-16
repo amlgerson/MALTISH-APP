@@ -1,0 +1,2245 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MALTISH - Apprends le Maltais</title>
+
+  <!-- PWA / iOS -->
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <meta name="theme-color" content="#c41e3a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="MALTISH" />
+  <link rel="apple-touch-icon" href="./apple-touch-icon.svg" />
+  <link rel="icon" href="./icon.svg" type="image/svg+xml" />
+
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    :root{
+      --primary:#c41e3a;
+      --accent:#ffd700;
+      --dark:#1a1a2e;
+      --light:#f5f5f5;
+      --success:#4caf50;
+      --error:#f44336;
+      --grammar:#9c27b0;
+      --conjugation:#ff9800;
+      --conversation:#00bcd4;
+      --phonetic:#e91e63;
+      --reading:#8bc34a;
+      --translation:#3f51b5;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:10px;
+    }
+    .phone{
+      width:100%;
+      max-width:420px;
+      height:95vh;
+      max-height:900px;
+      background:var(--light);
+      border-radius:30px;
+      overflow:hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,.5);
+      position:relative;
+    }
+
+    .header{
+      background: linear-gradient(135deg, var(--primary), #e63950);
+      color:#fff;
+      padding:18px 20px 14px;
+      position:relative;
+    }
+
+    .back-btn{
+      position:absolute;
+      left:14px;
+      top:16px;
+      width:36px;
+      height:36px;
+      border-radius:999px;
+      border:none;
+      background: rgba(255,255,255,0.22);
+      color:#fff;
+      font-size:18px;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+    }
+    .back-btn.visible{display:flex}
+
+    .streak{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      background: rgba(255,215,0,0.22);
+      padding:4px 12px;
+      border-radius:999px;
+      font-size:12px;
+      margin-top:6px;
+    }
+    .streak b{color:var(--accent)}
+
+    .mode-toggle{
+      display:flex;
+      background:#fff;
+      margin:10px 15px;
+      border-radius:999px;
+      padding:4px;
+      box-shadow: 0 2px 10px rgba(0,0,0,.08);
+    }
+    .mode-btn{
+      flex:1;
+      border:none;
+      background:transparent;
+      padding:10px;
+      border-radius:999px;
+      cursor:pointer;
+      font-weight:700;
+      font-size:12px;
+      color:#666;
+      transition: all .2s ease;
+    }
+    .mode-btn.active{
+      background: linear-gradient(135deg, var(--primary), #e63950);
+      color:#fff;
+      box-shadow: 0 3px 10px rgba(196,30,58,.25);
+    }
+
+    .progress-wrap{
+      background:#fff;
+      padding:10px 20px;
+      box-shadow: 0 2px 15px rgba(0,0,0,.05);
+    }
+    .bar{height:8px;background:#e5e5e5;border-radius:999px;overflow:hidden}
+    .fill{height:100%;width:0%;background: linear-gradient(90deg, var(--primary), var(--accent));transition: width .35s ease;border-radius:999px}
+
+    .content{
+      height: calc(100% - 225px);
+      overflow:auto;
+      padding: 12px 15px 92px;
+    }
+    .content::-webkit-scrollbar{width:4px}
+    .content::-webkit-scrollbar-thumb{background:#cfcfcf;border-radius:999px}
+
+    .screen{display:none}
+    .screen.active{display:block;animation: fadeIn .25s ease}
+    @keyframes fadeIn{from{opacity:0;transform: translateY(8px)}to{opacity:1;transform:none}}
+
+    /* Pasti integrated top (inside app) */
+    .pasti-top{background:#fff;padding:10px 15px;display:none;align-items:center;gap:12px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+    .pasti-top.visible{display:flex}
+    .pasti-mini{width:52px;height:40px;position:relative;flex-shrink:0;cursor:pointer;transition: transform .2s}
+    .pasti-mini:active{transform: scale(.96)}
+    .pasti-body{width:52px;height:33px;background: linear-gradient(145deg,#f4d03f,#c9a227);border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;position:relative;box-shadow: inset -3px -3px 10px rgba(0,0,0,.18), inset 3px 3px 10px rgba(255,255,255,.3), 0 3px 10px rgba(0,0,0,.25)}
+    .pasti-body::before{content:'';position:absolute;top:6px;left:7px;right:7px;height:18px;background: repeating-linear-gradient(90deg, transparent, transparent 3px, rgba(139,90,43,.28) 3px, rgba(139,90,43,.28) 5px);border-radius:999px}
+    .pasti-eyes{position:absolute;top:9px;left:50%;transform:translateX(-50%);display:flex;gap:8px}
+    .pasti-eye{width:10px;height:12px;background:#fff;border-radius:999px;position:relative}
+    .pasti-pupil{width:5px;height:6px;background:#2c1810;border-radius:999px;position:absolute;top:3px;left:3px;animation: look 4s ease-in-out infinite}
+    .pasti-pupil::after{content:'';width:2px;height:2px;background:#fff;border-radius:999px;position:absolute;top:1px;left:1px}
+    @keyframes look{0%,100%{transform:translate(0,0)}25%{transform:translate(1px,0)}50%{transform:translate(0,1px)}75%{transform:translate(-1px,0)}}
+    .pasti-blush{position:absolute;top:16px;width:7px;height:4px;background: rgba(255,150,150,.5);border-radius:999px}
+    .pasti-blush.left{left:6px}.pasti-blush.right{right:6px}
+    .pasti-mouth{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:9px;height:4px;border:2px solid #5d4037;border-top:none;border-radius: 0 0 8px 8px}
+    .pasti-speech{flex:1;background: linear-gradient(135deg,#fff9e6,#fff);padding:8px 12px;border-radius:15px;font-size:12px;color:#856404;border-left:3px solid var(--accent);min-height:40px;display:flex;align-items:center}
+
+    /* cards */
+    .grid2{display:grid;grid-template-columns: repeat(2, 1fr);gap:12px}
+    .cat{background:#fff;border-radius:16px;padding:16px 10px;text-align:center;box-shadow: 0 3px 15px rgba(0,0,0,.08);cursor:pointer;transition: all .2s ease;border:2px solid transparent}
+    .cat:hover{transform: translateY(-2px)}
+    .cat.grammar{border-color: var(--grammar)}
+    .cat.conjugation{border-color: var(--conjugation)}
+    .cat.conversation{border-color: var(--conversation)}
+    .cat.phonetic{border-color: var(--phonetic)}
+    .cat.reading{border-color: var(--reading)}
+    .cat.translation{border-color: var(--translation)}
+    .cat .ico{width:45px;height:45px;border-radius:999px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff}
+    .cat.grammar .ico{background: var(--grammar)}
+    .cat.conjugation .ico{background: var(--conjugation)}
+    .cat.conversation .ico{background: var(--conversation)}
+    .cat.phonetic .ico{background: var(--phonetic)}
+    .cat.reading .ico{background: var(--reading)}
+    .cat.translation .ico{background: var(--translation)}
+    .cat h3{font-size:13px;font-weight:800;color: var(--dark)}
+    .cat p{font-size:10px;color:#888;margin-top:2px}
+
+    .list{display:grid;gap:10px}
+    .item{background:#fff;border-radius:14px;padding:14px;display:flex;align-items:center;gap:12px;box-shadow:0 3px 15px rgba(0,0,0,.08);cursor:pointer;border:2px solid transparent;transition:all .2s}
+    .item:hover{border-color: var(--primary);transform: translateY(-1px)}
+    .item.completed{border-color: var(--success);background: linear-gradient(135deg,#f0fff0,#fff)}
+    .item.locked{opacity:.5;cursor:not-allowed}
+    .item.locked:hover{transform:none;border-color:transparent}
+    .item .icon{width:45px;height:45px;border-radius:12px;background: linear-gradient(135deg,var(--primary),#e63950);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+    .item h4{font-weight:900;color:var(--dark);font-size:14px}
+    .item small{display:block;color:#888;font-size:11px;margin-top:2px}
+
+    .box{background:#fff;border-radius:16px;padding:18px;box-shadow:0 3px 15px rgba(0,0,0,.08);margin-bottom:12px}
+    .box h3{color:var(--primary);font-weight:900;margin-bottom:10px}
+    .box p{color:#555;line-height:1.6;font-size:14px;margin:6px 0}
+    .example{background: linear-gradient(135deg,#f8f9ff,#fff);border-left:4px solid var(--primary);padding:12px;border-radius:0 10px 10px 0;margin:10px 0}
+    .example .mt{color:var(--primary);font-weight:900;font-size:18px}
+    .example .ipa{color:#888;font-style:italic;font-size:12px}
+    .example .fr{color:var(--dark);font-size:14px}
+
+    .table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}
+    .table th{background: var(--primary);color:#fff;padding:8px;text-align:left}
+    .table td{padding:8px;border-bottom:1px solid #eee}
+    .table tr:nth-child(even){background:#fafafa}
+    .mtcell{color:var(--primary);font-weight:800}
+
+    .tip{background: linear-gradient(135deg,#fff9e6,#fff3cd);border-left:4px solid var(--accent);border-radius:10px;padding:10px;display:flex;gap:8px;align-items:flex-start;margin:12px 0}
+    .tip .t{font-size:14px}
+    .tip p{font-size:12px;color:#856404;line-height:1.4}
+
+    .warn{background: linear-gradient(135deg,#ffebee,#fff);border-left:4px solid var(--error);border-radius:10px;padding:10px;margin:12px 0}
+    .warn b{color:var(--error)}
+
+    .dots{display:flex;justify-content:center;gap:5px;margin:6px 0 12px}
+    .dot{width:8px;height:8px;border-radius:999px;background:#ddd}
+    .dot.active{background: var(--primary);transform: scale(1.2)}
+    .dot.done{background: var(--success)}
+
+    .navRow{display:flex;gap:10px;margin-top:12px}
+    .btn{flex:1;border:none;border-radius:10px;padding:12px;font-weight:800;cursor:pointer;font-size:14px}
+    .btn.secondary{background:#eaeaea;color:#666}
+    .btn.primary{background: linear-gradient(135deg,var(--primary),#e63950);color:#fff;box-shadow: 0 3px 12px rgba(196,30,58,.25)}
+    .btn.primary:disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+
+    /* practice word */
+    .wordCard{background:#fff;border-radius:18px;padding:22px;text-align:center;box-shadow:0 5px 20px rgba(0,0,0,.1);margin-bottom:12px}
+    .wordMT{font-size:34px;color:var(--primary);font-weight:900}
+    .wordIPA{font-size:14px;color:#888;font-style:italic;margin-top:2px}
+    .wordFR{display:inline-block;background: #f2f2f2;border-radius:10px;padding:10px 18px;font-size:18px;color: var(--dark);margin-top:12px}
+    .audio{width:56px;height:56px;border-radius:999px;border:none;background: linear-gradient(135deg,var(--primary),#e63950);color:#fff;font-size:20px;cursor:pointer;box-shadow:0 5px 15px rgba(196,30,58,.35);margin:12px auto 0;display:block}
+
+    /* quiz */
+    .opt{padding:12px;background:#f2f2f2;border-radius:10px;border:2px solid transparent;cursor:pointer;text-align:center;font-weight:700;transition: all .2s}
+    .opt:hover{border-color: var(--primary)}
+    .opt.correct{background:#d4edda;border-color: var(--success)}
+    .opt.wrong{background:#f8d7da;border-color: var(--error)}
+    .opt.disabled{pointer-events:none;opacity:.95}
+
+    /* bottom nav */
+    .bottom{
+      position:absolute;left:0;right:0;bottom:0;
+      background:#fff;
+      display:flex;
+      justify-content:space-around;
+      padding:8px 0 14px;
+      box-shadow: 0 -5px 25px rgba(0,0,0,.1);
+      border-radius:0 0 30px 30px;
+    }
+    .nav{display:flex;flex-direction:column;align-items:center;gap:2px;color:#aaa;font-size:10px;cursor:pointer;padding:5px 12px}
+    .nav.active{color: var(--primary)}
+    .nav .i{font-size:20px}
+
+    /* pills */
+    .pill{display:inline-flex;gap:8px;align-items:center;background:#fff;border-radius:999px;padding:8px 10px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+    .pill button{border:none;background:transparent;font-weight:800;font-size:12px;color:#666;cursor:pointer;padding:6px 10px;border-radius:999px}
+    .pill button.active{background:#f2f2f2;color:var(--dark)}
+
+    /* settings */
+    .toggle{width:44px;height:24px;border-radius:999px;background:#ddd;position:relative;cursor:pointer;transition: all .2s}
+    .toggle::after{content:'';width:20px;height:20px;border-radius:999px;background:#fff;position:absolute;top:2px;left:2px;transition: all .2s;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+    .toggle.on{background: rgba(76,175,80,.5)}
+    .toggle.on::after{left:22px}
+
+    .chip{display:inline-flex;align-items:center;gap:6px;background:#f2f2f2;border-radius:999px;padding:6px 10px;font-weight:800;font-size:12px;color:#444}
+
+    /* modal */
+    .modal-back{position:absolute;inset:0;background: rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:14px}
+    .modal-back.visible{display:flex}
+    .modal{background:#fff;border-radius:16px;max-width:390px;width:100%;padding:16px;box-shadow: 0 12px 40px rgba(0,0,0,.35)}
+    .modal h3{font-weight:900;color: var(--dark);margin-bottom:6px}
+    .modal p{color:#555;font-size:13px;line-height:1.5}
+  </style>
+</head>
+<body>
+  <div class="phone" id="appRoot">
+    <!-- Header -->
+    <div class="header">
+      <button class="back-btn" id="backBtn" aria-label="Retour">←</button>
+      <div class="flex items-center justify-center gap-2">
+        <div class="w-12 h-12">
+          <svg viewBox="0 0 50 50" class="w-full h-full">
+            <defs>
+              <linearGradient id="crossGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#fff;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#f0f0f0;stop-opacity:1" />
+              </linearGradient>
+            </defs>
+            <circle cx="25" cy="25" r="24" fill="#c41e3a"/>
+            <path d="M25 5 L29 15 L39 11 L35 21 L45 25 L35 29 L39 39 L29 35 L25 45 L21 35 L11 39 L15 29 L5 25 L15 21 L11 11 L21 15 Z" fill="url(#crossGrad)"/>
+            <circle cx="25" cy="25" r="6" fill="#c41e3a"/>
+          </svg>
+        </div>
+        <div class="text-center">
+          <div class="text-[26px] font-black tracking-[3px]">MALTISH</div>
+          <div class="text-[12px] opacity-90" id="headerSubtitle">Apprends le Maltais</div>
+          <div class="streak">🔥 <b id="streakCount">0</b> jours</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mode Toggle -->
+    <div class="mode-toggle" id="modeToggle">
+      <button class="mode-btn active" id="modePracticeBtn">🎮 Pratique</button>
+      <button class="mode-btn" id="modeUniBtn">🎓 Universitaire</button>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap">
+      <div class="bar"><div class="fill" id="progressFill"></div></div>
+      <div class="flex justify-between mt-1 text-[11px] text-slate-500">
+        <span id="progressLabel">Progression</span>
+        <span id="progressPercent">0%</span>
+      </div>
+    </div>
+
+    <!-- Pasti integrated -->
+    <div class="pasti-top" id="pastiTop">
+      <div class="pasti-mini" id="pastiBtn" title="Clique pour un conseil">
+        <div class="pasti-body">
+          <div class="pasti-eyes">
+            <div class="pasti-eye"><div class="pasti-pupil"></div></div>
+            <div class="pasti-eye"><div class="pasti-pupil"></div></div>
+          </div>
+          <div class="pasti-blush left"></div>
+          <div class="pasti-blush right"></div>
+          <div class="pasti-mouth"></div>
+        </div>
+      </div>
+      <div class="pasti-speech" id="pastiSpeech">Bonġu! Je suis Pasti, ton ami pastizzi !</div>
+    </div>
+
+    <!-- Content -->
+    <div class="content" id="content">
+      <!-- LEARN TAB -->
+      <div class="screen active" id="screenLearn">
+        <!-- home practice -->
+        <div class="screen active" id="homePractice">
+          <div class="list" id="practiceModules"></div>
+        </div>
+
+        <!-- home university -->
+        <div class="screen" id="homeUniversity">
+          <div class="grid2" id="uniCategories"></div>
+        </div>
+
+        <!-- category screen -->
+        <div class="screen" id="categoryScreen">
+          <div class="mb-3 text-center">
+            <div class="text-[18px] font-black text-[var(--dark)]" id="categoryTitle">Catégorie</div>
+            <div class="text-[12px] text-slate-500" id="categoryDesc">Description</div>
+          </div>
+          <div class="list" id="categoryLessons"></div>
+        </div>
+
+        <!-- lesson screen (university) -->
+        <div class="screen" id="lessonScreen">
+          <div class="dots" id="lessonDots"></div>
+          <div id="lessonContent"></div>
+          <div class="navRow">
+            <button class="btn secondary" id="lessonPrevBtn">← Retour</button>
+            <button class="btn primary" id="lessonNextBtn">Suivant →</button>
+          </div>
+        </div>
+
+        <!-- practice word -->
+        <div class="screen" id="wordScreen">
+          <div class="text-center text-[12px] text-slate-500 mb-2" id="wordCounter">1 / 8</div>
+          <div class="wordCard">
+            <div class="wordMT" id="wordMT">Bonġu</div>
+            <div class="wordIPA" id="wordIPA">[bon-dʒu]</div>
+            <button class="audio" id="wordAudioBtn">🔊</button>
+            <div class="wordFR" id="wordFR">Bonjour</div>
+          </div>
+          <div class="tip">
+            <div class="t">💡</div>
+            <p id="wordTip">Le 'ġ' se prononce [dʒ].</p>
+          </div>
+          <div class="navRow">
+            <button class="btn secondary" id="wordPrevBtn">← Retour</button>
+            <button class="btn primary" id="wordNextBtn">Suivant →</button>
+          </div>
+        </div>
+
+        <!-- practice quiz -->
+        <div class="screen" id="quizScreen">
+          <div class="box">
+            <div class="text-center text-[12px] text-slate-500" id="quizPrompt">Comment dit-on :</div>
+            <div class="text-center text-[22px] font-black text-[var(--primary)] mt-1" id="quizWord">Bonjour</div>
+            <div class="grid gap-2 mt-4" id="quizOptions"></div>
+          </div>
+        </div>
+
+        <!-- result -->
+        <div class="screen" id="resultScreen">
+          <div class="box text-center">
+            <div class="text-[56px]" id="resultIcon">🎉</div>
+            <div class="text-[22px] font-black text-[var(--dark)]" id="resultTitle">Perfett!</div>
+            <div class="text-[44px] font-black text-[var(--primary)]" id="resultScore">8/8</div>
+            <div class="text-[14px] text-slate-600" id="resultMessage">Tu maîtrises cette leçon !</div>
+            <button class="btn primary mt-4" id="resultBtn">Continuer →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- REVIEW TAB -->
+      <div class="screen" id="screenReview">
+        <div class="box">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-[18px] font-black text-[var(--dark)]">Réviser</div>
+              <div class="text-[12px] text-slate-500">Révisions intelligentes sur ce que tu as déjà vu</div>
+            </div>
+            <div class="chip" id="reviewCountChip">0 items</div>
+          </div>
+        </div>
+
+        <div class="box">
+          <div class="flex items-center justify-between">
+            <div class="pill" id="reviewModePill">
+              <button class="active" data-mode="practice">🎮 Mots</button>
+              <button data-mode="university">🎓 Quiz</button>
+            </div>
+            <button class="btn primary" style="flex:0 0 auto; padding:10px 14px" id="startReviewBtn">Démarrer</button>
+          </div>
+          <p class="text-[12px] text-slate-500 mt-3">Le mode “Mots” revoit les mots des modules complétés. Le mode “Quiz” revoit les quiz universitaires déjà déverrouillés.</p>
+        </div>
+
+        <div class="box" id="reviewArea" style="display:none"></div>
+      </div>
+
+      <!-- STATS TAB -->
+      <div class="screen" id="screenStats">
+        <div class="box">
+          <div class="text-[18px] font-black text-[var(--dark)]">Progrès</div>
+          <div class="text-[12px] text-slate-500">Vue détaillée de ta progression</div>
+          <div class="grid gap-2 mt-4">
+            <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50">
+              <div>
+                <div class="font-black text-[var(--dark)]">🎮 Pratique</div>
+                <div class="text-[12px] text-slate-500" id="statsPracticeLine">0/0 modules</div>
+              </div>
+              <div class="text-[22px] font-black text-[var(--primary)]" id="statsPracticePct">0%</div>
+            </div>
+            <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50">
+              <div>
+                <div class="font-black text-[var(--dark)]">🎓 Universitaire</div>
+                <div class="text-[12px] text-slate-500" id="statsUniLine">0/0 leçons</div>
+              </div>
+              <div class="text-[22px] font-black text-[var(--primary)]" id="statsUniPct">0%</div>
+            </div>
+            <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50">
+              <div>
+                <div class="font-black text-[var(--dark)]">🔥 Série</div>
+                <div class="text-[12px] text-slate-500">Jours consécutifs</div>
+              </div>
+              <div class="text-[22px] font-black text-[var(--primary)]" id="statsStreak">0</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="box">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="font-black text-[var(--dark)]">Historique</div>
+              <div class="text-[12px] text-slate-500">Dernières activités (local)</div>
+            </div>
+            <button class="btn secondary" style="flex:0 0 auto; padding:10px 12px" id="clearHistoryBtn">Effacer</button>
+          </div>
+          <div class="mt-3 grid gap-2" id="historyList"></div>
+        </div>
+      </div>
+
+      <!-- SETTINGS TAB -->
+      <div class="screen" id="screenSettings">
+        <div class="box">
+          <div class="text-[18px] font-black text-[var(--dark)]">Options</div>
+          <div class="text-[12px] text-slate-500">Préférences de l’application</div>
+        </div>
+
+        <div class="box">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="font-black text-[var(--dark)]">Son (prononciation)</div>
+              <div class="text-[12px] text-slate-500">Synthèse vocale en maltais</div>
+            </div>
+            <div class="toggle" id="toggleSound" role="switch" aria-checked="true"></div>
+          </div>
+
+          <div class="flex items-center justify-between mt-4">
+            <div>
+              <div class="font-black text-[var(--dark)]">Animations</div>
+              <div class="text-[12px] text-slate-500">Transitions et micro-animations</div>
+            </div>
+            <div class="toggle on" id="toggleAnim" role="switch" aria-checked="true"></div>
+          </div>
+
+          <div class="flex items-center justify-between mt-4">
+            <div>
+              <div class="font-black text-[var(--dark)]">Affichage IPA</div>
+              <div class="text-[12px] text-slate-500">Montrer systématiquement la phonétique</div>
+            </div>
+            <div class="toggle on" id="toggleIPA" role="switch" aria-checked="true"></div>
+          </div>
+
+          <div class="mt-4">
+            <div class="font-black text-[var(--dark)] mb-2">Données</div>
+            <div class="flex gap-2">
+              <button class="btn secondary" id="exportBtn">Exporter</button>
+              <button class="btn secondary" id="importBtn">Importer</button>
+            </div>
+            <div class="flex gap-2 mt-2">
+              <button class="btn secondary" id="resetProgressBtn">Réinitialiser progression</button>
+              <button class="btn secondary" id="resetAllBtn">Tout réinitialiser</button>
+            </div>
+            <input type="file" id="importFile" accept="application/json" class="hidden" />
+          </div>
+        </div>
+
+        <div class="box">
+          <div class="font-black text-[var(--dark)]">À propos</div>
+          <p class="text-[13px] text-slate-600 mt-2">MALTISH est une application locale (sans serveur) : tes progrès sont enregistrés dans ton navigateur.</p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <span class="chip">Mode Pratique</span>
+            <span class="chip">Mode Universitaire</span>
+            <span class="chip">Révisions</span>
+            <span class="chip">Stats</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom nav -->
+    <div class="bottom" id="bottomNav">
+      <div class="nav active" data-tab="learn"><div class="i">📚</div><div>Apprendre</div></div>
+      <div class="nav" data-tab="review"><div class="i">🎯</div><div>Réviser</div></div>
+      <div class="nav" data-tab="stats"><div class="i">📊</div><div>Progrès</div></div>
+      <div class="nav" data-tab="settings"><div class="i">⚙️</div><div>Options</div></div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-back" id="modalBack" role="dialog" aria-modal="true">
+      <div class="modal">
+        <div class="flex items-center justify-between gap-3">
+          <h3 id="modalTitle">Info</h3>
+          <button class="btn secondary" style="flex:0 0 auto;padding:8px 10px" id="modalClose">Fermer</button>
+        </div>
+        <p id="modalText" class="mt-2"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==============================
+    // Data (expanded)
+    // ==============================
+
+    const pastiPhrases = [
+      "Bonġu! Je suis Pasti, ton ami pastizzi !",
+      "Prosit! Continue comme ça — ftit ftit!",
+      "Astuce : x = [ʃ] comme 'ch' !",
+      "Astuce : ġ = [dʒ] comme 'j' !",
+      "Ħ se prononce comme un H fort expiré !",
+      "Għ allonge la voyelle qui suit (souvent silencieux).",
+      "Tajjeb ħafna! Tu fais de beaux progrès.",
+      "N'oublie pas : l'article s'assimile (is-, it-, ix-...)."
+    ];
+
+    const practiceModules = [
+      {
+        id:"salutations",
+        name:"Salutations de Base",
+        emoji:"👋",
+        desc:"Dire bonjour / au revoir",
+        words:[
+          {maltese:"Bonġu", ipa:"[bon-dʒu]", french:"Bonjour", tip:"ġ = [dʒ]"},
+          {maltese:"Bonswa", ipa:"[bon-swa]", french:"Bonsoir", tip:"Emprunt italo-romain"},
+          {maltese:"Il-lejl it-tajjeb", ipa:"[il-leyl it-tɑy-yep]", french:"Bonne nuit", tip:"lit. 'la nuit la bonne'"},
+          {maltese:"Saħħa", ipa:"[sɑħ-ħɑ]", french:"Au revoir / Santé", tip:"ħ fort"},
+          {maltese:"Grazzi", ipa:"[grɑt-tsi]", french:"Merci", tip:"comme 'grazie'"},
+          {maltese:"Grazzi ħafna", ipa:"[grɑt-tsi ħɑf-nɑ]", french:"Merci beaucoup", tip:"ħafna = beaucoup"},
+          {maltese:"Iva", ipa:"[i-vɑ]", french:"Oui", tip:"simple"},
+          {maltese:"Le", ipa:"[le]", french:"Non", tip:"négation courte"}
+        ]
+      },
+      {
+        id:"politesse",
+        name:"Politesse",
+        emoji:"🙏",
+        desc:"Être poli",
+        words:[
+          {maltese:"Jekk jogħġbok", ipa:"[yek yoɑdʒ-bok]", french:"S'il te plaît", tip:"lit. 'si ça te plaît'"},
+          {maltese:"Skużani", ipa:"[sku-zɑ-ni]", french:"Excuse-moi", tip:"italien"},
+          {maltese:"Jiddispjaċini", ipa:"[yid-dis-pyɑ-tʃi-ni]", french:"Je suis désolé", tip:"formel"},
+          {maltese:"Mhux problema", ipa:"[muʃ pro-ble-mɑ]", french:"Pas de problème", tip:"mhux = pas"},
+          {maltese:"Merħba", ipa:"[mer-ħbɑ]", french:"Bienvenue", tip:"réception"},
+          {maltese:"B'saħħtek", ipa:"[bsɑħ-ħtek]", french:"À ta santé", tip:"pour trinquer"},
+          {maltese:"Il-ġurnata t-tajba", ipa:"[il-dʒur-nɑ-tɑ t-tɑy-bɑ]", french:"Bonne journée", tip:"article + assimilation"},
+          {maltese:"Niltaqgħu aktar tard", ipa:"[nil-tɑʔ-u ɑk-tɑr tɑrd]", french:"À plus tard", tip:"expression utile"}
+        ]
+      },
+      {
+        id:"presentations",
+        name:"Se Présenter",
+        emoji:"👤",
+        desc:"Identité & origine",
+        words:[
+          {maltese:"X'jismek?", ipa:"[ʃis-mek]", french:"Comment t'appelles-tu ?", tip:"X = [ʃ]"},
+          {maltese:"Jisimni...", ipa:"[yi-sim-ni]", french:"Je m'appelle...", tip:"présentation"},
+          {maltese:"Kif int?", ipa:"[kif int]", french:"Comment vas-tu ?", tip:"kif=comment"},
+          {maltese:"Jien tajjeb", ipa:"[yin tɑy-yep]", french:"Je vais bien (m)", tip:"tajjeb masc"},
+          {maltese:"Jiena tajba", ipa:"[yi-nɑ tɑy-bɑ]", french:"Je vais bien (f)", tip:"tajba fém"},
+          {maltese:"Mnejn int?", ipa:"[mneyn int]", french:"D'où viens-tu ?", tip:"mnejn=d'où"},
+          {maltese:"Jien minn...", ipa:"[yin min]", french:"Je viens de...", tip:"minn=de"},
+          {maltese:"Kemm għandek?", ipa:"[kemm ɑn-dek]", french:"Quel âge as-tu ?", tip:"għandek=tu as"}
+        ]
+      },
+      {
+        id:"nombres1",
+        name:"Nombres 1–10",
+        emoji:"🔢",
+        desc:"Compter jusqu'à 10",
+        words:[
+          {maltese:"Wieħed", ipa:"[wi-ħet]", french:"Un (1)", tip:"ħ audible"},
+          {maltese:"Tnejn", ipa:"[tneyn]", french:"Deux (2)", tip:"j=[y]"},
+          {maltese:"Tlieta", ipa:"[tli-tɑ]", french:"Trois (3)", tip:"groupe tl"},
+          {maltese:"Erbgħa", ipa:"[er-bɑ]", french:"Quatre (4)", tip:"għ marque longueur"},
+          {maltese:"Ħamsa", ipa:"[ħɑm-sɑ]", french:"Cinq (5)", tip:"ħ"},
+          {maltese:"Sitta", ipa:"[sit-tɑ]", french:"Six (6)", tip:"double consonne"},
+          {maltese:"Sebgħa", ipa:"[seb-ɑ]", french:"Sept (7)", tip:"għ souvent faible"},
+          {maltese:"Tmienja", ipa:"[tmin-yɑ]", french:"Huit (8)", tip:"j=[y]"},
+          {maltese:"Disgħa", ipa:"[dis-ɑ]", french:"Neuf (9)", tip:"racine sémitique"},
+          {maltese:"Għaxra", ipa:"[ɑʃ-rɑ]", french:"Dix (10)", tip:"x=[ʃ]"}
+        ]
+      },
+      {
+        id:"nourriture",
+        name:"Nourriture",
+        emoji:"🍽️",
+        desc:"Manger et boire",
+        words:[
+          {maltese:"Ħobż", ipa:"[ħobz]", french:"Pain", tip:"ħ fort"},
+          {maltese:"Ilma", ipa:"[il-mɑ]", french:"Eau", tip:"l- devant voyelle"},
+          {maltese:"Pastizzi", ipa:"[pɑs-tit-si]", french:"Feuilletés", tip:"spécialité"},
+          {maltese:"Fenek", ipa:"[fe-nek]", french:"Lapin", tip:"plat national"},
+          {maltese:"Ħut", ipa:"[ħut]", french:"Poisson", tip:"ħ"},
+          {maltese:"Laħam", ipa:"[lɑ-ħɑm]", french:"Viande", tip:"ħ"},
+          {maltese:"Ġobon", ipa:"[dʒo-bon]", french:"Fromage", tip:"ġ"},
+          {maltese:"Frott", ipa:"[frott]", french:"Fruit", tip:"double t"}
+        ]
+      }
+    ];
+
+    // University categories: each lesson has steps; steps can be: theory | quiz | cloze | translation | dialogue | reading
+    const universityCategories = {
+      grammar: {
+        id:"grammar", title:"Grammaire", icon:"📖", color:"grammar",
+        desc:"Articles, genre, pronoms, structure",
+        lessons:[
+          {
+            id:"article", name:"L'Article Défini", emoji:"📝", desc:"il-, l-, assimilation solaire",
+            steps:[
+              {type:"theory", content:`
+                <div class="box">
+                  <h3>📖 L'article défini <span class="mtcell">il-</span></h3>
+                  <p>En maltais, un seul article défini : <b>il-</b> (le/la/les). Pas d'article indéfini (absence d'article = indéfini).</p>
+                  <div class="example"><div class="mt">il-ktieb</div><div class="ipa">[il-ktiːp]</div><div class="fr">le livre</div></div>
+                  <div class="example"><div class="mt">il-mara</div><div class="ipa">[il-mɑ-rɑ]</div><div class="fr">la femme</div></div>
+                  <div class="tip"><div class="t">💡</div><p><b>ktieb</b> = un livre (indéfini)</p></div>
+                </div>
+              `},
+              {type:"theory", content:`
+                <div class="box">
+                  <h3>☀️ Consonnes « solaires »</h3>
+                  <p>Devant <b>ċ, d, n, r, s, t, x, ż, z</b>, le <b>l</b> de l'article s'assimile (double consonne).</p>
+                  <div class="example"><div class="mt">is-sema</div><div class="ipa">[is-se-mɑ]</div><div class="fr">le ciel</div></div>
+                  <div class="example"><div class="mt">it-tifel</div><div class="ipa">[it-ti-fel]</div><div class="fr">le garçon</div></div>
+                  <div class="example"><div class="mt">ix-xemx</div><div class="ipa">[iʃ-ʃemʃ]</div><div class="fr">le soleil</div></div>
+                </div>
+              `},
+              {type:"theory", content:`
+                <div class="box">
+                  <h3>🌙 Consonnes « lunaires » + voyelles</h3>
+                  <p>Devant les autres consonnes, on garde <b>il-</b>. Devant voyelle : <b>l-</b>.</p>
+                  <div class="example"><div class="mt">il-kelb</div><div class="ipa">[il-kelp]</div><div class="fr">le chien</div></div>
+                  <div class="example"><div class="mt">l-ilma</div><div class="ipa">[lil-mɑ]</div><div class="fr">l'eau</div></div>
+                  <div class="warn"><b>À retenir :</b> l'assimilation s'écrit (is-sema, it-tifel, ix-xemx).</div>
+                </div>
+              `},
+              {type:"quiz", title:"Quiz — article", questions:[
+                {prompt:"Comment dit-on “le soleil” ?", options:["il-xemx","ix-xemx","l-xemx","xemx"], answer:1, explain:"x est solaire → ix-xemx"},
+                {prompt:"Comment dit-on “la maison” ? (dar)", options:["il-dar","id-dar","l-dar","dar"], answer:1, explain:"d est solaire → id-dar"},
+                {prompt:"Comment dit-on “le chien” ? (kelb)", options:["ik-kelb","il-kelb","iż-żkelb","is-sekelb"], answer:1, explain:"k est lunaire → il-kelb"},
+                {prompt:"Comment dit-on “l'eau” ? (ilma)", options:["il-ilma","l-ilma","ilma","ill-ilma"], answer:1, explain:"voyelle → l-"}
+              ]}
+            ]
+          },
+          {
+            id:"pronouns", name:"Pronoms personnels", emoji:"👤", desc:"formes courtes/longues + suffixes",
+            steps:[
+              {type:"theory", content:`
+                <div class="box">
+                  <h3>👤 Pronoms sujets</h3>
+                  <table class="table">
+                    <tr><th>Maltais</th><th>IPA</th><th>Français</th></tr>
+                    <tr><td class="mtcell">Jien / Jiena</td><td>[yin] / [yi-nɑ]</td><td>je / moi</td></tr>
+                    <tr><td class="mtcell">Int / Inti</td><td>[int] / [in-ti]</td><td>tu</td></tr>
+                    <tr><td class="mtcell">Hu / Huwa</td><td>[u] / [u-wɑ]</td><td>il</td></tr>
+                    <tr><td class="mtcell">Hi / Hija</td><td>[i] / [i-yɑ]</td><td>elle</td></tr>
+                    <tr><td class="mtcell">Aħna</td><td>[ɑħ-nɑ]</td><td>nous</td></tr>
+                    <tr><td class="mtcell">Intom</td><td>[in-tom]</td><td>vous</td></tr>
+                    <tr><td class="mtcell">Huma</td><td>[u-mɑ]</td><td>ils/elles</td></tr>
+                  </table>
+                  <div class="tip"><div class="t">💡</div><p>Forme longue = emphase : <b>Jiena</b> (moi, je...).</p></div>
+                </div>
+              `},
+              {type:"theory", content:`
+                <div class="box">
+                  <h3>🔗 Suffixes pronominaux (possessifs/objets)</h3>
+                  <p>Ils s'attachent aux noms, prépositions, verbes.</p>
+                  <table class="table">
+                    <tr><th>Suffixe</th><th>Sens</th><th>Exemple</th></tr>
+                    <tr><td class="mtcell">-i</td><td>mon/ma, me</td><td>dar<i>i</i> (ma maison)</td></tr>
+                    <tr><td class="mtcell">-ek</td><td>ton/ta (m)</td><td>dar<i>ek</i></td></tr>
+                    <tr><td class="mtcell">-ik</td><td>ton/ta (f)</td><td>dar<i>ik</i></td></tr>
+                    <tr><td class="mtcell">-u</td><td>son/sa (m)</td><td>dar<i>u</i></td></tr>
+                    <tr><td class="mtcell">-ha</td><td>son/sa (f)</td><td>dar<i>ha</i></td></tr>
+                    <tr><td class="mtcell">-na</td><td>notre/nous</td><td>dar<i>na</i></td></tr>
+                    <tr><td class="mtcell">-kom</td><td>votre/vous</td><td>dar<i>kom</i></td></tr>
+                    <tr><td class="mtcell">-hom</td><td>leur/les</td><td>dar<i>hom</i></td></tr>
+                  </table>
+                </div>
+              `},
+              {type:"cloze", title:"Exercice — suffixes", prompt:"Complète avec le bon suffixe", items:[
+                {before:"dar", after:" = ma maison", answer:"i"},
+                {before:"dar", after:" = ta maison (m)", answer:"ek"},
+                {before:"dar", after:" = sa maison (f)", answer:"ha"},
+                {before:"dar", after:" = notre maison", answer:"na"}
+              ]}
+            ]
+          },
+          {
+            id:"negation", name:"Négation (ma...x)", emoji:"🚫", desc:"structure négative",
+            steps:[
+              {type:"theory", content:`
+                <div class="box">
+                  <h3>🚫 Négation en maltais : <span class="mtcell">ma...x</span></h3>
+                  <p>La négation s'exprime souvent par <b>ma</b> + verbe + <b>-x</b>.</p>
+                  <div class="example"><div class="mt">Ma nifhimx</div><div class="ipa">[mɑ nif-himʃ]</div><div class="fr">Je ne comprends pas</div></div>
+                  <div class="example"><div class="mt">Ma nistax</div><div class="ipa">[mɑ nis-tɑʃ]</div><div class="fr">Je ne peux pas</div></div>
+                  <div class="tip"><div class="t">💡</div><p>Le -x se prononce souvent [ʃ] quand il suit i/e (nifhimx → [nifhimʃ]).</p></div>
+                </div>
+              `},
+              {type:"quiz", title:"Quiz — négation", questions:[
+                {prompt:"Traduction : “Je ne comprends pas.”", options:["Ma nifhimx","Nifhim","Ma nifhem","Mhux nifhim"], answer:0, explain:"Forme standard ma...x"},
+                {prompt:"Quel élément ferme souvent la négation ?", options:["-u","-x","-ha","-i"], answer:1, explain:"ma + ... + x"}
+              ]}
+            ]
+          }
+        ]
+      },
+
+      conjugation: {
+        id:"conjugation", title:"Conjugaison", icon:"✏️", color:"conjugation",
+        desc:"Présent, passé, futur, verbes utiles",
+        lessons:[
+          {
+            id:"being", name:"Être (zéro au présent)", emoji:"🔵", desc:"pas de verbe être au présent",
+            steps:[
+              {type:"theory", content:`
+                <div class="box">
+                  <h3>🔵 “Être” au présent : <span class="mtcell">(∅)</span></h3>
+                  <p>Au présent, on n'emploie pas de verbe “être” : <b>pronom + adjectif/nom</b>.</p>
+                  <div class="example"><div class="mt">Jien kuntent</div><div class="ipa">[yin kun-tent]</div><div class="fr">Je suis content</div></div>
+                  <div class="example"><div class="mt">Hi Maltija</div><div class="ipa">[i mɑl-ti-yɑ]</div><div class="fr">Elle est maltaise</div></div>
+                  <div class="warn"><b>Accord :</b> kuntent (m) / kuntenta (f); Malti (m) / Maltija (f)</div>
+                </div>
+              `},
+              {type:"quiz", title:"Quiz — être au présent", questions:[
+                {prompt:"Choisis la meilleure phrase pour “Elle est belle”.", options:["Hi sabiħa","Hi kienet sabiħa","Hija tkun sabiħa","Hi sabih"], answer:0, explain:"Présent sans verbe"},
+                {prompt:"Comment dire “Nous sommes maltais” ?", options:["Aħna Maltin","Aħna konna Maltin","Aħna nkunu Maltin","Aħna il-Maltin"], answer:0, explain:"Aħna + adjectif"}
+              ]}
+            ]
+          },
+          {
+            id:"have", name:"Avoir (għand-)", emoji:"✋", desc:"préposition + suffixes",
+            steps:[
+              {type:"theory", content:`
+                <div class="box">
+                  <h3>✋ “Avoir” : <span class="mtcell">għand-</span> + suffixe</h3>
+                  <table class="table">
+                    <tr><th>Forme</th><th>Français</th></tr>
+                    <tr><td class="mtcell">Għandi</td><td>j'ai</td></tr>
+                    <tr><td class="mtcell">Għandek / Għandik</td><td>tu as (m/f)</td></tr>
+                    <tr><td class="mtcell">Għandu</td><td>il a</td></tr>
+                    <tr><td class="mtcell">Għandha</td><td>elle a</td></tr>
+                    <tr><td class="mtcell">Għandna</td><td>nous avons</td></tr>
+                    <tr><td class="mtcell">Għandkom</td><td>vous avez</td></tr>
+                    <tr><td class="mtcell">Għandhom</td><td>ils ont</td></tr>
+                  </table>
+                  <div class="tip"><div class="t">💡</div><p>Litt. “chez moi/chez toi ...”.</p></div>
+                </div>
+              `},
+              {type:"translation", title:"Exercices — avoir", direction:"fr-to-mt", items:[
+                {prompt:"J'ai un chien.", answer:"Għandi kelb"},
+                {prompt:"Tu as le temps ? (m)", answer:"Għandek ħin?"},
+                {prompt:"Nous avons un problème.", answer:"Għandna problema"}
+              ]}
+            ]
+          },
+          {
+            id:"present",
+            name:"Présent régulier (n-/t-/j-)",
+            emoji:"⏱️",
+            desc:"k-t-b, q-r-a, f-h-m",
+            steps:[
+              {type:"theory", content:`
+                <div class="box">
+                  <h3>⏱️ Présent : préfixes</h3>
+                  <p>En schéma courant : <b>n-</b> (je/nous), <b>t-</b> (tu/elle/vous), <b>j-</b> (il/ils).</p>
+                  <p>Exemple : <b>KITEB</b> (écrire) → <span class="mtcell">nikteb</span>, <span class="mtcell">tikteb</span>, <span class="mtcell">jikteb</span>...</p>
+                  <table class="table">
+                    <tr><th>Pronom</th><th>Maltais</th><th>Français</th></tr>
+                    <tr><td>Jien</td><td class="mtcell">nikteb</td><td>j'écris</td></tr>
+                    <tr><td>Int</td><td class="mtcell">tikteb</td><td>tu écris</td></tr>
+                    <tr><td>Hu</td><td class="mtcell">jikteb</td><td>il écrit</td></tr>
+                    <tr><td>Aħna</td><td class="mtcell">niktbu</td><td>nous écrivons</td></tr>
+                  </table>
+                </div>
+              `},
+              {type:"quiz", title:"Quiz — préfixes", questions:[
+                {prompt:"Le préfixe de “je” au présent est :", options:["j-","t-","n-","s-"], answer:2, explain:"n-"},
+                {prompt:"“Il écrit” (k-t-b) :", options:["nikteb","tikteb","jikteb","kiteb"], answer:2, explain:"j-"}
+              ]}
+            ]
+          }
+        ]
+      },
+
+      conversation: {
+        id:"conversation", title:"Conversations", icon:"🗣️", color:"conversation",
+        desc:"Dialogues + quiz de compréhension",
+        lessons:[
+          {
+            id:"meet", name:"Première rencontre", emoji:"👋", desc:"se présenter",
+            steps:[
+              {type:"dialogue", title:"Dialogue", lines:[
+                {a:"A", icon:"👨", mt:"Bonġu! X'jismek?", ipa:"[bon-dʒu ʃis-mek]", fr:"Bonjour ! Comment t'appelles-tu ?"},
+                {a:"B", icon:"👩", mt:"Bonġu! Jisimni Maria. U int?", ipa:"[bon-dʒu yi-sim-ni mɑ-ri-ɑ u int]", fr:"Bonjour ! Je m'appelle Maria. Et toi ?"},
+                {a:"A", icon:"👨", mt:"Jisimni Pawlu. Gost niltaqa' miegħek!", ipa:"[yi-sim-ni pɑw-lu gost nil-tɑ-ʔɑ mye-ek]", fr:"Je m'appelle Paul. Enchanté !"}
+              ]},
+              {type:"quiz", title:"Compréhension", questions:[
+                {prompt:"Comment s'appelle la femme ?", options:["Rosa","Maria","Anna","Pawla"], answer:1, explain:"Elle dit: Jisimni Maria"},
+                {prompt:"Que signifie “Gost niltaqa' miegħek” ?", options:["Où es-tu ?","Enchanté de te rencontrer","Je suis fatigué","À demain"], answer:1, explain:"Formule de rencontre"}
+              ]}
+            ]
+          },
+          {
+            id:"restaurant", name:"Au restaurant", emoji:"🍽️", desc:"commander",
+            steps:[
+              {type:"dialogue", title:"Dialogue", lines:[
+                {a:"A", icon:"👨‍🍳", mt:"Merħba! X'tixtiequ?", ipa:"[mer-ħbɑ ʃtiʃ-tye-u]", fr:"Bienvenue ! Que voulez-vous ?"},
+                {a:"B", icon:"👤", mt:"Nixtieq pastizzi tal-irkotta, jekk jogħġbok.", ipa:"[niʃ-tyeʔ pɑs-tit-si tɑl-ir-kot-tɑ yek yoɑdʒ-bok]", fr:"Je voudrais des pastizzi à la ricotta."},
+                {a:"A", icon:"👨‍🍳", mt:"Kemm trid?", ipa:"[kemm trit]", fr:"Combien en veux-tu ?"}
+              ]},
+              {type:"translation", title:"Traduction (clé)", direction:"mt-to-fr", items:[
+                {prompt:"Kemm trid?", answer:"Combien en veux-tu ?"},
+                {prompt:"Nixtieq kafè, jekk jogħġbok.", answer:"Je voudrais un café, s'il vous plaît."}
+              ]}
+            ]
+          }
+        ]
+      },
+
+      phonetic: {
+        id:"phonetic", title:"Phonétique", icon:"🔤", color:"phonetic",
+        desc:"Sons, IPA, exemples",
+        lessons:[
+          {
+            id:"special", name:"Lettres spéciales", emoji:"🔤", desc:"ċ, ġ, għ, ħ, q, x",
+            steps:[
+              {type:"theory", content:`
+                <div class="box">
+                  <h3>🔤 Lettres clés</h3>
+                  <p><b>Ċ</b> = [tʃ], <b>Ġ</b> = [dʒ], <b>X</b> = [ʃ], <b>Q</b> = [ʔ], <b>Ħ</b> = [ħ], <b>Għ</b> = longueur (souvent silencieux).</p>
+                  <div class="example"><div class="mt">xemx</div><div class="ipa">[ʃemʃ]</div><div class="fr">soleil</div></div>
+                  <div class="example"><div class="mt">qalb</div><div class="ipa">[ʔɑlp]</div><div class="fr">cœur</div></div>
+                </div>
+              `},
+              {type:"quiz", title:"Quiz IPA", questions:[
+                {prompt:"Quelle lettre se prononce [ʃ] ?", options:["x","ġ","ċ","q"], answer:0, explain:"x"},
+                {prompt:"Quelle lettre correspond au coup de glotte [ʔ] ?", options:["q","ħ","għ","ż"], answer:0, explain:"q"}
+              ]}
+            ]
+          }
+        ]
+      },
+
+      reading: {
+        id:"reading", title:"Lecture", icon:"📄", color:"reading",
+        desc:"Textes + questions",
+        lessons:[
+          {
+            id:"family", name:"Il-Familja Tiegħi", emoji:"👨‍👩‍👧‍👦", desc:"texte + compréhension",
+            steps:[
+              {type:"reading", title:"Il-Familja Tiegħi", text:`
+                <p><span class="mtcell">Jien jisimni Marija.</span> Għandi familja kbira. L-omm tiegħi jisimha Anna u l-missier tiegħi jismu Ġużepp.</p>
+                <p>Għandi tlett aħwa u oħt waħda. Huma jgħixu f'Birkirkara.</p>
+              `, questions:[
+                {prompt:"Kif jisimha l-omm?", type:"mcq", options:["Rosa","Anna","Marija","Ġużepp"], answer:1},
+                {prompt:"Fejn jgħixu?", type:"mcq", options:["Il-Belt","Birkirkara","Gozo","Mdina"], answer:1}
+              ], translation:`
+                <p>Je m'appelle Maria. J'ai une grande famille. Ma mère s'appelle Anna et mon père s'appelle Joseph.</p>
+                <p>J'ai trois frères et une sœur. Ils vivent à Birkirkara.</p>
+              `}
+            ]
+          }
+        ]
+      },
+
+      translation: {
+        id:"translation", title:"Traduction", icon:"🔄", color:"translation",
+        desc:"FR ↔ MT corrigé automatiquement",
+        lessons:[
+          {
+            id:"frmt", name:"FR → MT (base)", emoji:"➡️", desc:"phrases essentielles",
+            steps:[
+              {type:"translation", title:"Série FR → MT", direction:"fr-to-mt", items:[
+                {prompt:"Bonjour, comment vas-tu ?", answer:"Bonġu, kif int?"},
+                {prompt:"Je m'appelle Marie.", answer:"Jisimni Marija."},
+                {prompt:"J'ai un chien.", answer:"Għandi kelb."},
+                {prompt:"Où est la maison ?", answer:"Fejn hi d-dar?"},
+                {prompt:"Merci beaucoup !", answer:"Grazzi ħafna!"}
+              ]}
+            ]
+          },
+          {
+            id:"mtfr", name:"MT → FR (base)", emoji:"⬅️", desc:"compréhension",
+            steps:[
+              {type:"translation", title:"Série MT → FR", direction:"mt-to-fr", items:[
+                {prompt:"Jiena mill-Franza.", answer:"Je viens de France."},
+                {prompt:"Għandi ħu u oħt.", answer:"J'ai un frère et une sœur."},
+                {prompt:"Il-ktieb hu fuq il-mejda.", answer:"Le livre est sur la table."},
+                {prompt:"Nixtieq kafè, jekk jogħġbok.", answer:"Je voudrais un café, s'il vous plaît."},
+                {prompt:"Malta hi gżira żgħira.", answer:"Malte est une petite île."}
+              ]}
+            ]
+          }
+        ]
+      }
+    };
+
+    // ==============================
+    // State + persistence
+    // ==============================
+
+    const LS_KEYS = {
+      practice: 'maltish_practice_progress_v2',
+      uni: 'maltish_university_progress_v2',
+      settings: 'maltish_settings_v2',
+      streak: 'maltish_streak_v2',
+      history: 'maltish_history_v2'
+    };
+
+    const state = {
+      mode: 'practice', // practice|university
+      tab: 'learn',     // learn|review|stats|settings
+      navStack: [],
+
+      // practice
+      currentModuleId: null,
+      wordIndex: 0,
+      quizIndex: 0,
+      quizScore: 0,
+
+      // university
+      currentCategoryId: null,
+      currentLessonId: null,
+      stepIndex: 0,
+
+      // step-local
+      uniQuiz: { answered: false, selected: null, correct: null },
+      uniCloze: { answers: {} },
+      uniTranslation: { answers: {}, revealed: {} },
+      readingAnswers: {},
+
+      practiceProgress: {},
+      uniProgress: {},
+      settings: { sound: true, animations: true, showIPA: true },
+      streak: { count: 0, lastISO: null },
+      history: []
+    };
+
+    function isoDate(d=new Date()){return d.toISOString().slice(0,10)}
+
+    function loadAll(){
+      try{
+        const p = localStorage.getItem(LS_KEYS.practice);
+        const u = localStorage.getItem(LS_KEYS.uni);
+        const s = localStorage.getItem(LS_KEYS.settings);
+        const st = localStorage.getItem(LS_KEYS.streak);
+        const h = localStorage.getItem(LS_KEYS.history);
+        if(p) state.practiceProgress = JSON.parse(p);
+        if(u) state.uniProgress = JSON.parse(u);
+        if(s) state.settings = {...state.settings, ...JSON.parse(s)};
+        if(st) state.streak = {...state.streak, ...JSON.parse(st)};
+        if(h) state.history = JSON.parse(h);
+      }catch(e){console.warn('load failed', e)}
+    }
+    function saveAll(){
+      localStorage.setItem(LS_KEYS.practice, JSON.stringify(state.practiceProgress));
+      localStorage.setItem(LS_KEYS.uni, JSON.stringify(state.uniProgress));
+      localStorage.setItem(LS_KEYS.settings, JSON.stringify(state.settings));
+      localStorage.setItem(LS_KEYS.streak, JSON.stringify(state.streak));
+      localStorage.setItem(LS_KEYS.history, JSON.stringify(state.history));
+    }
+
+    function pushHistory(type, label){
+      const entry = {ts: Date.now(), type, label};
+      state.history.unshift(entry);
+      state.history = state.history.slice(0, 30);
+      saveAll();
+      renderHistory();
+    }
+
+    function bumpStreak(){
+      const today = isoDate();
+      const last = state.streak.lastISO;
+      if(!last){
+        state.streak.count = 1;
+        state.streak.lastISO = today;
+      } else if(last === today){
+        // no change
+      } else {
+        const lastDate = new Date(last + 'T00:00:00');
+        const todayDate = new Date(today + 'T00:00:00');
+        const diffDays = Math.round((todayDate - lastDate)/(1000*60*60*24));
+        if(diffDays === 1) state.streak.count += 1;
+        else state.streak.count = 1;
+        state.streak.lastISO = today;
+      }
+      saveAll();
+      document.getElementById('streakCount').textContent = String(state.streak.count);
+    }
+
+    // ==============================
+    // Utilities
+    // ==============================
+
+    function normalizeAnswer(s){
+      return (s||'')
+        .trim()
+        .toLowerCase()
+        .replace(/[’']/g,"'")
+        .replace(/\s+/g,' ')
+        .replace(/[.!?]+$/,'');
+    }
+
+    function showModal(title, text){
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalText').textContent = text;
+      document.getElementById('modalBack').classList.add('visible');
+    }
+    function closeModal(){
+      document.getElementById('modalBack').classList.remove('visible');
+    }
+
+    function speak(text){
+      if(!state.settings.sound) return;
+      if(!('speechSynthesis' in window)) return;
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = 'mt-MT';
+      u.rate = 0.82;
+      u.pitch = 1;
+      speechSynthesis.speak(u);
+    }
+
+    // ==============================
+    // Rendering
+    // ==============================
+
+    function setMode(mode){
+      state.mode = mode;
+      document.getElementById('modePracticeBtn').classList.toggle('active', mode==='practice');
+      document.getElementById('modeUniBtn').classList.toggle('active', mode==='university');
+      // within learn tab, switch between homePractice and homeUniversity
+      showLearnHome();
+      updateProgressBar();
+    }
+
+    function showTab(tab){
+      state.tab = tab;
+      document.querySelectorAll('.nav').forEach(n=>n.classList.toggle('active', n.dataset.tab===tab));
+      document.querySelectorAll('#content > .screen').forEach(s=>s.classList.remove('active'));
+      const map = {learn:'screenLearn', review:'screenReview', stats:'screenStats', settings:'screenSettings'};
+      document.getElementById(map[tab]).classList.add('active');
+
+      // when leaving learn, clear back button stack
+      if(tab !== 'learn'){
+        document.getElementById('backBtn').classList.remove('visible');
+      } else {
+        // restore proper back button state
+        document.getElementById('backBtn').classList.toggle('visible', state.navStack.length>0);
+      }
+
+      renderReview();
+      renderStats();
+      renderSettings();
+    }
+
+    function showLearnHome(){
+      // hide all learn-sub-screens first
+      ['homePractice','homeUniversity','categoryScreen','lessonScreen','wordScreen','quizScreen','resultScreen'].forEach(id=>{
+        document.getElementById(id).classList.remove('active');
+      });
+
+      // show pastit only in practice mode
+      document.getElementById('pastiTop').classList.toggle('visible', state.mode==='practice');
+      document.getElementById('headerSubtitle').textContent = state.mode==='practice' ? 'Apprends le Maltais' : 'Cours universitaire (exercices inclus)';
+
+      if(state.mode==='practice') document.getElementById('homePractice').classList.add('active');
+      else document.getElementById('homeUniversity').classList.add('active');
+
+      document.getElementById('backBtn').classList.remove('visible');
+      state.navStack = [];
+
+      renderPracticeModules();
+      renderUniversityCategories();
+      updateProgressBar();
+    }
+
+    function showLearnScreen(id){
+      // only within screenLearn
+      ['homePractice','homeUniversity','categoryScreen','lessonScreen','wordScreen','quizScreen','resultScreen'].forEach(x=>document.getElementById(x).classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.getElementById('backBtn').classList.toggle('visible', state.navStack.length>0);
+    }
+
+    function goBack(){
+      if(state.navStack.length===0) return;
+      const prev = state.navStack.pop();
+      showLearnScreen(prev);
+      if(state.navStack.length===0) document.getElementById('backBtn').classList.remove('visible');
+      updateProgressBar();
+    }
+
+    function renderPracticeModules(){
+      const el = document.getElementById('practiceModules');
+      el.innerHTML = '';
+
+      // gating: next module unlocks after previous completed
+      let unlocked = true;
+      practiceModules.forEach((m, idx)=>{
+        const completed = !!state.practiceProgress[m.id]?.completed;
+        if(idx===0) unlocked = true;
+        else {
+          const prevId = practiceModules[idx-1].id;
+          unlocked = !!state.practiceProgress[prevId]?.completed;
+        }
+
+        const card = document.createElement('div');
+        card.className = 'item ' + (completed ? 'completed ' : '') + (!unlocked ? 'locked' : '');
+        card.innerHTML = `
+          <div class="icon">${m.emoji}</div>
+          <div class="flex-1">
+            <h4>${m.name}</h4>
+            <small>${m.desc}</small>
+          </div>
+          <div class="text-[18px]">${completed ? '✅' : (unlocked ? '▶️' : '🔒')}</div>
+        `;
+        if(unlocked){
+          card.addEventListener('click', ()=> startPracticeModule(m.id));
+        } else {
+          card.addEventListener('click', ()=> showModal('Module verrouillé', 'Termine le module précédent pour débloquer celui-ci.'));
+        }
+        el.appendChild(card);
+      });
+    }
+
+    function renderUniversityCategories(){
+      const el = document.getElementById('uniCategories');
+      el.innerHTML='';
+      Object.values(universityCategories).forEach(cat=>{
+        const div = document.createElement('div');
+        div.className = `cat ${cat.color}`;
+        div.innerHTML = `
+          <div class="ico">${cat.icon}</div>
+          <h3>${cat.title}</h3>
+          <p>${cat.desc}</p>
+        `;
+        div.addEventListener('click', ()=> openCategory(cat.id));
+        el.appendChild(div);
+      });
+    }
+
+    function openCategory(categoryId){
+      state.currentCategoryId = categoryId;
+      const cat = universityCategories[categoryId];
+
+      document.getElementById('categoryTitle').textContent = cat.title;
+      document.getElementById('categoryDesc').textContent = cat.desc;
+
+      const list = document.getElementById('categoryLessons');
+      list.innerHTML='';
+
+      // gating: first lesson unlocked, next unlock by completion
+      cat.lessons.forEach((lesson, idx)=>{
+        const key = `${categoryId}_${lesson.id}`;
+        const completed = !!state.uniProgress[key]?.completed;
+        const unlocked = idx===0 ? true : !!state.uniProgress[`${categoryId}_${cat.lessons[idx-1].id}`]?.completed;
+
+        const card = document.createElement('div');
+        card.className = 'item ' + (completed ? 'completed ' : '') + (!unlocked ? 'locked' : '');
+        card.innerHTML = `
+          <div class="icon">${lesson.emoji}</div>
+          <div class="flex-1">
+            <h4>${lesson.name}</h4>
+            <small>${lesson.desc}</small>
+          </div>
+          <div class="text-[18px]">${completed ? '✅' : (unlocked ? '▶️' : '🔒')}</div>
+        `;
+        if(unlocked){
+          card.addEventListener('click', ()=> startUniversityLesson(categoryId, lesson.id));
+        } else {
+          card.addEventListener('click', ()=> showModal('Leçon verrouillée', 'Termine la leçon précédente pour débloquer celle-ci.'));
+        }
+        list.appendChild(card);
+      });
+
+      state.navStack.push(state.mode==='practice' ? 'homePractice' : 'homeUniversity');
+      showLearnScreen('categoryScreen');
+      updateProgressBar();
+    }
+
+    function renderLessonDots(total, current){
+      const el = document.getElementById('lessonDots');
+      el.innerHTML='';
+      for(let i=0;i<total;i++){
+        const d = document.createElement('div');
+        d.className = 'dot' + (i===current ? ' active' : '') + (i<current ? ' done' : '');
+        el.appendChild(d);
+      }
+    }
+
+    function startUniversityLesson(categoryId, lessonId){
+      state.currentCategoryId = categoryId;
+      state.currentLessonId = lessonId;
+      state.stepIndex = 0;
+      state.uniQuiz = {answered:false, selected:null, correct:null};
+      state.uniCloze = {answers:{}};
+      state.uniTranslation = {answers:{}, revealed:{}};
+      state.readingAnswers = {};
+
+      state.navStack.push('categoryScreen');
+      showLearnScreen('lessonScreen');
+      renderUniversityStep();
+      updateProgressBar();
+
+      const cat = universityCategories[categoryId];
+      const lesson = cat.lessons.find(l=>l.id===lessonId);
+      pushHistory('uni', `${cat.title} — ${lesson.name}`);
+      bumpStreak();
+    }
+
+    function renderUniversityStep(){
+      const cat = universityCategories[state.currentCategoryId];
+      const lesson = cat.lessons.find(l=>l.id===state.currentLessonId);
+      const steps = lesson.steps;
+      const step = steps[state.stepIndex];
+
+      renderLessonDots(steps.length, state.stepIndex);
+
+      const container = document.getElementById('lessonContent');
+      container.innerHTML = '';
+
+      // header
+      const header = document.createElement('div');
+      header.className = 'mb-2 text-center';
+      header.innerHTML = `
+        <div class="text-[16px] font-black text-[var(--dark)]">${lesson.emoji} ${lesson.name}</div>
+        <div class="text-[12px] text-slate-500">${cat.title} • Étape ${state.stepIndex+1}/${steps.length}</div>
+      `;
+      container.appendChild(header);
+
+      if(step.type==='theory'){
+        const wrap = document.createElement('div');
+        wrap.innerHTML = step.content;
+        container.appendChild(wrap);
+      }
+
+      if(step.type==='dialogue'){
+        const box = document.createElement('div');
+        box.className='box';
+        box.innerHTML = `<h3>🗣️ ${step.title||'Dialogue'}</h3>`;
+        step.lines.forEach(line=>{
+          const div = document.createElement('div');
+          div.className = 'p-3 rounded-xl mb-2 ' + (line.a==='A' ? 'bg-sky-50 mr-4' : 'bg-pink-50 ml-4');
+          div.innerHTML = `
+            <div class="flex gap-2">
+              <div class="text-[18px]">${line.icon}</div>
+              <div class="flex-1">
+                <div class="font-extrabold text-[var(--primary)]">${line.mt}</div>
+                <div class="text-[12px] text-slate-500 italic">${line.ipa||''}</div>
+                <div class="text-[13px] text-slate-700">${line.fr||''}</div>
+              </div>
+              <button class="btn secondary" style="flex:0 0 auto;padding:8px 10px" data-speak="${line.mt.replace(/\"/g,'&quot;')}">🔊</button>
+            </div>
+          `;
+          div.querySelector('[data-speak]').addEventListener('click', (e)=> speak(line.mt));
+          box.appendChild(div);
+        });
+        container.appendChild(box);
+      }
+
+      if(step.type==='quiz'){
+        const box = document.createElement('div');
+        box.className='box';
+        box.innerHTML = `<h3>✅ ${step.title||'Quiz'}</h3><p>Réponds aux questions pour valider l'étape.</p>`;
+
+        step.questions.forEach((q, qi)=>{
+          const qWrap = document.createElement('div');
+          qWrap.className='mt-3';
+          const answeredKey = `quiz_${state.stepIndex}_${qi}`;
+          const saved = state.uniProgress[`${state.currentCategoryId}_${state.currentLessonId}`]?.stepData?.[answeredKey] || null;
+
+          qWrap.innerHTML = `
+            <div class="font-black text-[var(--dark)]">${qi+1}. ${q.prompt}</div>
+            <div class="grid gap-2 mt-2" id="q_${qi}"></div>
+            <div class="text-[12px] mt-2" id="exp_${qi}"></div>
+          `;
+
+          const optWrap = qWrap.querySelector(`#q_${qi}`);
+          q.options.forEach((opt, oi)=>{
+            const o = document.createElement('div');
+            o.className='opt';
+            o.textContent = opt;
+
+            const disable = !!saved;
+            if(disable) o.classList.add('disabled');
+
+            if(saved){
+              if(oi===q.answer) o.classList.add('correct');
+              if(oi===saved.selected && saved.selected!==q.answer) o.classList.add('wrong');
+              qWrap.querySelector(`#exp_${qi}`).innerHTML = saved.selected===q.answer
+                ? `<span class="text-green-700 font-bold">Correct.</span> ${q.explain||''}`
+                : `<span class="text-red-700 font-bold">Incorrect.</span> ${q.explain||''}`;
+            }
+
+            o.addEventListener('click', ()=>{
+              // Save selection
+              const lessonKey = `${state.currentCategoryId}_${state.currentLessonId}`;
+              state.uniProgress[lessonKey] = state.uniProgress[lessonKey] || {completed:false, score:0, stepData:{}};
+              state.uniProgress[lessonKey].stepData = state.uniProgress[lessonKey].stepData || {};
+              state.uniProgress[lessonKey].stepData[answeredKey] = {selected: oi, correct: q.answer};
+              saveAll();
+              renderUniversityStep();
+            });
+
+            optWrap.appendChild(o);
+          });
+
+          box.appendChild(qWrap);
+        });
+
+        container.appendChild(box);
+      }
+
+      if(step.type==='cloze'){
+        const box = document.createElement('div');
+        box.className='box';
+        box.innerHTML = `<h3>🧩 ${step.title||'Cloze'}</h3><p>${step.prompt||''}</p>`;
+
+        const lessonKey = `${state.currentCategoryId}_${state.currentLessonId}`;
+        const savedData = state.uniProgress[lessonKey]?.stepData || {};
+
+        step.items.forEach((it, idx)=>{
+          const key = `cloze_${state.stepIndex}_${idx}`;
+          const saved = savedData[key]?.value || '';
+
+          const row = document.createElement('div');
+          row.className='p-3 rounded-xl bg-slate-50 mt-2';
+          row.innerHTML = `
+            <div class="text-[12px] text-slate-500">${it.after}</div>
+            <div class="mt-1 flex items-center gap-2">
+              <span class="font-black text-[var(--primary)]">${it.before}</span>
+              <span class="text-slate-500">+</span>
+              <input class="w-24 px-3 py-2 rounded-xl border border-slate-200" placeholder="..." value="${saved}" />
+              <button class="btn secondary" style="flex:0 0 auto;padding:10px 12px">Vérifier</button>
+              <span class="text-[12px]"></span>
+            </div>
+          `;
+
+          const input = row.querySelector('input');
+          const check = row.querySelector('button');
+          const msg = row.querySelectorAll('span')[2];
+
+          check.addEventListener('click', ()=>{
+            const val = normalizeAnswer(input.value);
+            const ok = val === normalizeAnswer(it.answer);
+            msg.innerHTML = ok
+              ? `<span class="text-green-700 font-bold">✓</span>`
+              : `<span class="text-red-700 font-bold">✗</span> <span class="text-slate-500">Réponse: ${it.answer}</span>`;
+
+            const lessonKey = `${state.currentCategoryId}_${state.currentLessonId}`;
+            state.uniProgress[lessonKey] = state.uniProgress[lessonKey] || {completed:false, score:0, stepData:{}};
+            state.uniProgress[lessonKey].stepData = state.uniProgress[lessonKey].stepData || {};
+            state.uniProgress[lessonKey].stepData[key] = {value: input.value, ok};
+            saveAll();
+          });
+
+          box.appendChild(row);
+        });
+
+        container.appendChild(box);
+      }
+
+      if(step.type==='translation'){
+        const box = document.createElement('div');
+        box.className='box';
+        const dir = step.direction==='fr-to-mt' ? 'Traduisez en maltais' : 'Traduisez en français';
+        box.innerHTML = `<h3>🔄 ${step.title||'Traduction'}</h3><p>${dir}. Corrigé automatique + réponse révélable.</p>`;
+
+        const lessonKey = `${state.currentCategoryId}_${state.currentLessonId}`;
+        const stepData = (state.uniProgress[lessonKey]?.stepData)||{};
+
+        step.items.forEach((it, idx)=>{
+          const key = `tr_${state.stepIndex}_${idx}`;
+          const saved = stepData[key] || {value:'', ok:null, revealed:false};
+
+          const card = document.createElement('div');
+          card.className='p-3 rounded-xl bg-slate-50 mt-3';
+          card.innerHTML = `
+            <div class="text-[12px] text-slate-500">${idx+1}. ${it.prompt}</div>
+            <input class="w-full mt-2 px-3 py-2 rounded-xl border border-slate-200" placeholder="Écris ta réponse..." value="${saved.value.replace(/\"/g,'&quot;')}" />
+            <div class="flex gap-2 mt-2">
+              <button class="btn primary" style="flex:1;padding:10px 12px">Vérifier</button>
+              <button class="btn secondary" style="flex:0 0 auto;padding:10px 12px">Réponse</button>
+            </div>
+            <div class="text-[12px] mt-2" id="msg_${idx}"></div>
+          `;
+          const input = card.querySelector('input');
+          const verify = card.querySelectorAll('button')[0];
+          const reveal = card.querySelectorAll('button')[1];
+          const msg = card.querySelector(`#msg_${idx}`);
+
+          if(saved.ok===true){
+            msg.innerHTML = `<span class="text-green-700 font-bold">Correct.</span>`;
+          } else if(saved.ok===false){
+            msg.innerHTML = `<span class="text-red-700 font-bold">Incorrect.</span>` + (saved.revealed ? ` <span class="text-slate-500">Réponse: ${it.answer}</span>` : '');
+          }
+          if(saved.revealed){
+            msg.innerHTML = msg.innerHTML + ` <span class="text-slate-500">Réponse: ${it.answer}</span>`;
+          }
+
+          verify.addEventListener('click', ()=>{
+            const ok = normalizeAnswer(input.value) === normalizeAnswer(it.answer);
+            state.uniProgress[lessonKey] = state.uniProgress[lessonKey] || {completed:false, score:0, stepData:{}};
+            state.uniProgress[lessonKey].stepData = state.uniProgress[lessonKey].stepData || {};
+            state.uniProgress[lessonKey].stepData[key] = {value: input.value, ok, revealed: saved.revealed};
+            saveAll();
+            renderUniversityStep();
+          });
+          reveal.addEventListener('click', ()=>{
+            state.uniProgress[lessonKey] = state.uniProgress[lessonKey] || {completed:false, score:0, stepData:{}};
+            state.uniProgress[lessonKey].stepData = state.uniProgress[lessonKey].stepData || {};
+            const current = state.uniProgress[lessonKey].stepData[key] || {value: input.value, ok:null, revealed:false};
+            current.revealed = true;
+            current.value = input.value;
+            state.uniProgress[lessonKey].stepData[key] = current;
+            saveAll();
+            renderUniversityStep();
+          });
+
+          box.appendChild(card);
+        });
+
+        container.appendChild(box);
+      }
+
+      if(step.type==='reading'){
+        const box = document.createElement('div');
+        box.className='box';
+        box.innerHTML = `<h3>📄 ${step.title||'Lecture'}</h3>`;
+
+        const text = document.createElement('div');
+        text.className='p-3 rounded-xl bg-yellow-50 border-l-4';
+        text.style.borderLeftColor = 'var(--reading)';
+        text.innerHTML = step.text;
+        box.appendChild(text);
+
+        const qWrap = document.createElement('div');
+        qWrap.className='mt-3';
+        qWrap.innerHTML = `<div class="font-black text-[var(--dark)]">Questions</div>`;
+
+        const lessonKey = `${state.currentCategoryId}_${state.currentLessonId}`;
+        const stepData = (state.uniProgress[lessonKey]?.stepData)||{};
+
+        step.questions.forEach((q, idx)=>{
+          const key = `read_${state.stepIndex}_${idx}`;
+          const saved = stepData[key] || {selected:null, ok:null};
+
+          const card = document.createElement('div');
+          card.className='p-3 rounded-xl bg-slate-50 mt-2';
+          card.innerHTML = `
+            <div class="text-[13px] font-black text-[var(--dark)]">${idx+1}. ${q.prompt}</div>
+            <div class="grid gap-2 mt-2" id="rq_${idx}"></div>
+            <div class="text-[12px] mt-2" id="rm_${idx}"></div>
+            <button class="btn primary mt-2" style="padding:10px 12px" id="rv_${idx}">Valider</button>
+          `;
+          const optionsWrap = card.querySelector(`#rq_${idx}`);
+          q.options.forEach((opt, oi)=>{
+            const o = document.createElement('div');
+            o.className='opt';
+            o.textContent = opt;
+            if(saved.selected===oi) o.style.borderColor = 'var(--primary)';
+            o.addEventListener('click', ()=>{
+              // choose in memory
+              state.readingAnswers[key] = oi;
+              renderUniversityStep();
+            });
+            optionsWrap.appendChild(o);
+          });
+
+          const msg = card.querySelector(`#rm_${idx}`);
+          if(saved.ok===true) msg.innerHTML = `<span class="text-green-700 font-bold">Correct.</span>`;
+          if(saved.ok===false) msg.innerHTML = `<span class="text-red-700 font-bold">Incorrect.</span>`;
+
+          card.querySelector(`#rv_${idx}`).addEventListener('click', ()=>{
+            const selected = state.readingAnswers[key];
+            const ok = selected===q.answer;
+            state.uniProgress[lessonKey] = state.uniProgress[lessonKey] || {completed:false, score:0, stepData:{}};
+            state.uniProgress[lessonKey].stepData = state.uniProgress[lessonKey].stepData || {};
+            state.uniProgress[lessonKey].stepData[key] = {selected, ok, correct:q.answer};
+            saveAll();
+            renderUniversityStep();
+          });
+
+          qWrap.appendChild(card);
+        });
+
+        // translation toggle
+        const t = document.createElement('div');
+        t.className='mt-3 p-3 rounded-xl bg-sky-50';
+        t.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="font-black text-[var(--dark)]">Traduction</div>
+              <div class="text-[12px] text-slate-500">Pour vérifier ta compréhension</div>
+            </div>
+            <button class="btn secondary" style="flex:0 0 auto;padding:10px 12px" id="toggleTranslation">Afficher</button>
+          </div>
+          <div class="mt-2" id="translationArea" style="display:none"></div>
+        `;
+        const transArea = t.querySelector('#translationArea');
+        transArea.innerHTML = `<div class="p-3 rounded-xl bg-white">${step.translation||''}</div>`;
+        t.querySelector('#toggleTranslation').addEventListener('click', ()=>{
+          const show = transArea.style.display==='none';
+          transArea.style.display = show ? 'block' : 'none';
+          t.querySelector('#toggleTranslation').textContent = show ? 'Masquer' : 'Afficher';
+        });
+
+        box.appendChild(qWrap);
+        box.appendChild(t);
+        container.appendChild(box);
+      }
+
+      // controls
+      const prevBtn = document.getElementById('lessonPrevBtn');
+      const nextBtn = document.getElementById('lessonNextBtn');
+
+      prevBtn.disabled = false;
+      prevBtn.onclick = ()=>{
+        if(state.stepIndex>0){
+          state.stepIndex--;
+          renderUniversityStep();
+        } else {
+          goBack();
+        }
+      };
+
+      const canAdvance = validateUniversityStepCompletion(step);
+      nextBtn.disabled = !canAdvance;
+      nextBtn.textContent = state.stepIndex === steps.length-1 ? 'Terminer ✓' : 'Suivant →';
+      nextBtn.onclick = ()=>{
+        if(state.stepIndex < steps.length-1){
+          state.stepIndex++;
+          renderUniversityStep();
+        } else {
+          completeUniversityLesson();
+        }
+      };
+    }
+
+    function validateUniversityStepCompletion(step){
+      const lessonKey = `${state.currentCategoryId}_${state.currentLessonId}`;
+      const stepData = state.uniProgress[lessonKey]?.stepData || {};
+
+      if(step.type==='theory' || step.type==='dialogue') return true;
+
+      if(step.type==='quiz'){
+        // need all questions answered
+        return step.questions.every((q, qi)=>{
+          const key = `quiz_${state.stepIndex}_${qi}`;
+          return !!stepData[key];
+        });
+      }
+
+      if(step.type==='cloze'){
+        // need all items checked at least once
+        return step.items.every((it, idx)=>{
+          const key = `cloze_${state.stepIndex}_${idx}`;
+          return !!stepData[key];
+        });
+      }
+
+      if(step.type==='translation'){
+        // need each item verified at least once
+        return step.items.every((it, idx)=>{
+          const key = `tr_${state.stepIndex}_${idx}`;
+          return !!stepData[key];
+        });
+      }
+
+      if(step.type==='reading'){
+        // need all reading questions validated
+        return step.questions.every((q, idx)=>{
+          const key = `read_${state.stepIndex}_${idx}`;
+          return !!stepData[key];
+        });
+      }
+
+      return true;
+    }
+
+    function computeLessonScore(categoryId, lessonId){
+      const cat = universityCategories[categoryId];
+      const lesson = cat.lessons.find(l=>l.id===lessonId);
+      const lessonKey = `${categoryId}_${lessonId}`;
+      const stepData = state.uniProgress[lessonKey]?.stepData || {};
+
+      let total=0, ok=0;
+      lesson.steps.forEach((step, si)=>{
+        if(step.type==='quiz'){
+          step.questions.forEach((q, qi)=>{
+            total++;
+            const k = `quiz_${si}_${qi}`;
+            const data = stepData[k];
+            if(data && data.selected===q.answer) ok++;
+          });
+        }
+        if(step.type==='cloze'){
+          step.items.forEach((it, idx)=>{
+            total++;
+            const k = `cloze_${si}_${idx}`;
+            const data = stepData[k];
+            if(data && data.ok) ok++;
+          });
+        }
+        if(step.type==='translation'){
+          step.items.forEach((it, idx)=>{
+            total++;
+            const k = `tr_${si}_${idx}`;
+            const data = stepData[k];
+            if(data && data.ok) ok++;
+          });
+        }
+        if(step.type==='reading'){
+          step.questions.forEach((q, idx)=>{
+            total++;
+            const k = `read_${si}_${idx}`;
+            const data = stepData[k];
+            if(data && data.ok) ok++;
+          });
+        }
+      });
+
+      const pct = total>0 ? Math.round((ok/total)*100) : 100;
+      return {ok,total,pct};
+    }
+
+    function completeUniversityLesson(){
+      const lessonKey = `${state.currentCategoryId}_${state.currentLessonId}`;
+      const score = computeLessonScore(state.currentCategoryId, state.currentLessonId);
+      state.uniProgress[lessonKey] = state.uniProgress[lessonKey] || {completed:false, score:0, stepData:{}};
+      state.uniProgress[lessonKey].completed = true;
+      state.uniProgress[lessonKey].score = score.pct;
+      saveAll();
+
+      const cat = universityCategories[state.currentCategoryId];
+      const lesson = cat.lessons.find(l=>l.id===state.currentLessonId);
+
+      showModal('Leçon terminée', `${cat.title} — ${lesson.name}\nScore: ${score.ok}/${score.total} (${score.pct}%)`);
+
+      // return to category
+      goBack();
+      renderUniversityCategories();
+      updateProgressBar();
+    }
+
+    // ==============================
+    // Practice flow
+    // ==============================
+
+    function startPracticeModule(moduleId){
+      state.currentModuleId = moduleId;
+      state.wordIndex = 0;
+      state.quizIndex = 0;
+      state.quizScore = 0;
+      state.navStack.push('homePractice');
+      showLearnScreen('wordScreen');
+      renderWord();
+      pushHistory('practice', `Module — ${getModule(moduleId).name}`);
+      bumpStreak();
+      pastiSpeak();
+      updateProgressBar();
+    }
+
+    function getModule(id){return practiceModules.find(m=>m.id===id)}
+
+    function renderWord(){
+      const mod = getModule(state.currentModuleId);
+      const w = mod.words[state.wordIndex];
+      document.getElementById('wordCounter').textContent = `${state.wordIndex+1} / ${mod.words.length}`;
+      document.getElementById('wordMT').textContent = w.maltese;
+      document.getElementById('wordIPA').textContent = state.settings.showIPA ? w.ipa : '';
+      document.getElementById('wordFR').textContent = w.french;
+      document.getElementById('wordTip').textContent = w.tip;
+
+      document.getElementById('wordPrevBtn').onclick = ()=>{
+        if(state.wordIndex>0){state.wordIndex--;renderWord();}
+        else goBack();
+      };
+      document.getElementById('wordNextBtn').onclick = ()=>{
+        if(state.wordIndex < mod.words.length-1){state.wordIndex++;renderWord();}
+        else startPracticeQuiz();
+      };
+      document.getElementById('wordAudioBtn').onclick = ()=> speak(w.maltese);
+    }
+
+    function startPracticeQuiz(){
+      state.quizIndex = 0;
+      state.quizScore = 0;
+      state.navStack.push('wordScreen');
+      showLearnScreen('quizScreen');
+      renderPracticeQuiz();
+      updateProgressBar();
+    }
+
+    function renderPracticeQuiz(){
+      const mod = getModule(state.currentModuleId);
+      const w = mod.words[state.quizIndex];
+      document.getElementById('quizWord').textContent = w.french;
+      document.getElementById('quizPrompt').textContent = 'Comment dit-on :';
+
+      const options = generateOptions(mod.words, w.maltese);
+      const wrap = document.getElementById('quizOptions');
+      wrap.innerHTML='';
+
+      options.forEach(opt=>{
+        const div = document.createElement('div');
+        div.className='opt';
+        div.textContent = opt;
+        div.addEventListener('click', ()=> checkPracticeAnswer(opt, w.maltese, div));
+        wrap.appendChild(div);
+      });
+    }
+
+    function generateOptions(words, correct){
+      const pool = words.map(x=>x.maltese).filter(x=>x!==correct);
+      pool.sort(()=>Math.random()-0.5);
+      const opts = [correct];
+      while(opts.length<4 && pool.length){
+        const v = pool.pop();
+        if(!opts.includes(v)) opts.push(v);
+      }
+      return opts.sort(()=>Math.random()-0.5);
+    }
+
+    function checkPracticeAnswer(selected, correct, btn){
+      const all = Array.from(document.querySelectorAll('#quizOptions .opt'));
+      all.forEach(o=>o.classList.add('disabled'));
+
+      if(selected===correct){
+        btn.classList.add('correct');
+        state.quizScore++;
+        pastiPraise();
+      } else {
+        btn.classList.add('wrong');
+        all.forEach(o=>{ if(o.textContent===correct) o.classList.add('correct'); });
+      }
+
+      setTimeout(()=>{
+        const mod = getModule(state.currentModuleId);
+        if(state.quizIndex < mod.words.length-1){
+          state.quizIndex++;
+          renderPracticeQuiz();
+        } else {
+          showPracticeResults();
+        }
+      }, 850);
+    }
+
+    function showPracticeResults(){
+      const mod = getModule(state.currentModuleId);
+      const total = mod.words.length;
+      const pct = Math.round((state.quizScore/total)*100);
+      document.getElementById('resultScore').textContent = `${state.quizScore}/${total}`;
+
+      if(pct>=80){
+        document.getElementById('resultIcon').textContent = '🎉';
+        document.getElementById('resultTitle').textContent = 'Perfett!';
+        document.getElementById('resultMessage').textContent = 'Module validé.';
+        state.practiceProgress[mod.id] = {completed:true, score:pct, last:Date.now()};
+        saveAll();
+      } else if(pct>=60){
+        document.getElementById('resultIcon').textContent = '👍';
+        document.getElementById('resultTitle').textContent = 'Tajjeb!';
+        document.getElementById('resultMessage').textContent = 'Bien joué — refais-le pour valider.';
+        state.practiceProgress[mod.id] = state.practiceProgress[mod.id] || {completed:false, score:pct, last:Date.now()};
+        state.practiceProgress[mod.id].score = Math.max(state.practiceProgress[mod.id].score||0, pct);
+        state.practiceProgress[mod.id].last = Date.now();
+        saveAll();
+      } else {
+        document.getElementById('resultIcon').textContent = '💪';
+        document.getElementById('resultTitle').textContent = 'Ipprova erġa\'!';
+        document.getElementById('resultMessage').textContent = 'Réessaie pour progresser.';
+        state.practiceProgress[mod.id] = state.practiceProgress[mod.id] || {completed:false, score:pct, last:Date.now()};
+        state.practiceProgress[mod.id].score = Math.max(state.practiceProgress[mod.id].score||0, pct);
+        state.practiceProgress[mod.id].last = Date.now();
+        saveAll();
+      }
+
+      document.getElementById('resultBtn').onclick = ()=>{
+        renderPracticeModules();
+        showLearnHome();
+        pastiSpeak();
+      };
+
+      showLearnScreen('resultScreen');
+      updateProgressBar();
+    }
+
+    // ==============================
+    // Review
+    // ==============================
+
+    function renderReview(){
+      if(state.tab!=='review') return;
+
+      const reviewArea = document.getElementById('reviewArea');
+      reviewArea.style.display = 'none';
+      reviewArea.innerHTML = '';
+
+      const mode = document.querySelector('#reviewModePill button.active')?.dataset.mode || 'practice';
+
+      // count items
+      let count = 0;
+      if(mode==='practice'){
+        practiceModules.forEach(m=>{
+          if(state.practiceProgress[m.id]?.completed) count += m.words.length;
+        });
+      } else {
+        // count quiz questions unlocked across completed lessons
+        Object.keys(state.uniProgress).forEach(k=>{
+          const v = state.uniProgress[k];
+          if(v && v.completed){
+            const [catId, lessonId] = k.split('_');
+            const cat = universityCategories[catId];
+            const lesson = cat?.lessons?.find(l=>l.id===lessonId);
+            if(lesson){
+              lesson.steps.forEach(st=>{ if(st.type==='quiz') count += st.questions.length; });
+            }
+          }
+        });
+      }
+      document.getElementById('reviewCountChip').textContent = `${count} items`;
+
+      document.getElementById('startReviewBtn').onclick = ()=>{
+        if(count===0){
+          showModal('Rien à réviser', mode==='practice'
+            ? "Termine au moins un module en Pratique pour débloquer la révision."
+            : "Termine au moins une leçon universitaire (avec quiz) pour débloquer cette révision." );
+          return;
+        }
+        if(mode==='practice') startReviewPractice();
+        else startReviewUniversity();
+      };
+    }
+
+    function startReviewPractice(){
+      const pool = [];
+      practiceModules.forEach(m=>{
+        if(state.practiceProgress[m.id]?.completed){
+          m.words.forEach(w=> pool.push({module:m.name, maltese:w.maltese, french:w.french}));
+        }
+      });
+      pool.sort(()=>Math.random()-0.5);
+      const sample = pool.slice(0, 10);
+
+      const area = document.getElementById('reviewArea');
+      area.style.display='block';
+      area.innerHTML = `
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="font-black text-[var(--dark)]">🎮 Révision — 10 cartes</div>
+            <div class="text-[12px] text-slate-500">Clique sur une carte pour afficher la traduction</div>
+          </div>
+          <button class="btn secondary" style="flex:0 0 auto;padding:10px 12px" id="reshuffle">Mélanger</button>
+        </div>
+        <div class="grid gap-2 mt-3" id="cards"></div>
+      `;
+      const cards = area.querySelector('#cards');
+      sample.forEach(it=>{
+        const c = document.createElement('div');
+        c.className='p-3 rounded-xl bg-slate-50 cursor-pointer';
+        c.innerHTML = `<div class="text-[12px] text-slate-500">${it.module}</div><div class="text-[18px] font-black text-[var(--primary)]">${it.maltese}</div><div class="text-[13px] text-slate-700" style="display:none">${it.french}</div>`;
+        c.addEventListener('click', ()=>{
+          const fr = c.querySelectorAll('div')[2];
+          const show = fr.style.display==='none';
+          fr.style.display = show ? 'block' : 'none';
+          if(show) speak(it.maltese);
+        });
+        cards.appendChild(c);
+      });
+      area.querySelector('#reshuffle').onclick = ()=> startReviewPractice();
+      pushHistory('review', 'Révision — Mots');
+    }
+
+    function startReviewUniversity(){
+      // build pool of completed lesson quiz questions and quiz again
+      const pool = [];
+      Object.keys(state.uniProgress).forEach(k=>{
+        const v = state.uniProgress[k];
+        if(v && v.completed){
+          const [catId, lessonId] = k.split('_');
+          const cat = universityCategories[catId];
+          const lesson = cat?.lessons?.find(l=>l.id===lessonId);
+          if(!lesson) return;
+          lesson.steps.forEach((st, si)=>{
+            if(st.type==='quiz'){
+              st.questions.forEach((q, qi)=>{
+                pool.push({cat:cat.title, lesson:lesson.name, q});
+              });
+            }
+          });
+        }
+      });
+      pool.sort(()=>Math.random()-0.5);
+      const q = pool[0];
+
+      const area = document.getElementById('reviewArea');
+      area.style.display='block';
+      area.innerHTML = `
+        <div class="text-[12px] text-slate-500">${q.cat} • ${q.lesson}</div>
+        <div class="text-[16px] font-black text-[var(--dark)] mt-1">${q.q.prompt}</div>
+        <div class="grid gap-2 mt-3" id="opts"></div>
+        <div class="text-[12px] mt-2" id="msg"></div>
+        <div class="flex gap-2 mt-3">
+          <button class="btn secondary" id="nextR">Autre question</button>
+          <button class="btn primary" id="doneR">Terminer</button>
+        </div>
+      `;
+
+      const opts = area.querySelector('#opts');
+      q.q.options.forEach((opt, i)=>{
+        const o = document.createElement('div');
+        o.className='opt';
+        o.textContent = opt;
+        o.addEventListener('click', ()=>{
+          Array.from(opts.children).forEach(x=>x.classList.add('disabled'));
+          if(i===q.q.answer){
+            o.classList.add('correct');
+            area.querySelector('#msg').innerHTML = `<span class="text-green-700 font-bold">Correct.</span> ${q.q.explain||''}`;
+          } else {
+            o.classList.add('wrong');
+            Array.from(opts.children).forEach(x=>{ if(x.textContent===q.q.options[q.q.answer]) x.classList.add('correct'); });
+            area.querySelector('#msg').innerHTML = `<span class="text-red-700 font-bold">Incorrect.</span> ${q.q.explain||''}`;
+          }
+        });
+        opts.appendChild(o);
+      });
+
+      area.querySelector('#nextR').onclick = ()=> startReviewUniversity();
+      area.querySelector('#doneR').onclick = ()=>{
+        area.style.display='none';
+        area.innerHTML='';
+      };
+      pushHistory('review', 'Révision — Quiz universitaire');
+    }
+
+    // ==============================
+    // Stats
+    // ==============================
+
+    function renderStats(){
+      if(state.tab!=='stats') return;
+
+      const practiceCompleted = practiceModules.filter(m=>state.practiceProgress[m.id]?.completed).length;
+      const practiceTotal = practiceModules.length;
+      const pPct = practiceTotal ? Math.round((practiceCompleted/practiceTotal)*100) : 0;
+      document.getElementById('statsPracticeLine').textContent = `${practiceCompleted}/${practiceTotal} modules`;
+      document.getElementById('statsPracticePct').textContent = `${pPct}%`;
+
+      let uniTotal = 0;
+      Object.values(universityCategories).forEach(cat=> uniTotal += cat.lessons.length);
+      const uniCompleted = Object.keys(state.uniProgress).filter(k=>state.uniProgress[k]?.completed).length;
+      const uPct = uniTotal ? Math.round((uniCompleted/uniTotal)*100) : 0;
+      document.getElementById('statsUniLine').textContent = `${uniCompleted}/${uniTotal} leçons`;
+      document.getElementById('statsUniPct').textContent = `${uPct}%`;
+
+      document.getElementById('statsStreak').textContent = String(state.streak.count);
+
+      renderHistory();
+      document.getElementById('clearHistoryBtn').onclick = ()=>{
+        state.history = [];
+        saveAll();
+        renderHistory();
+      };
+    }
+
+    function renderHistory(){
+      const list = document.getElementById('historyList');
+      if(!list) return;
+      list.innerHTML = '';
+      if(state.history.length===0){
+        list.innerHTML = `<div class="text-[12px] text-slate-500">Aucune activité récente.</div>`;
+        return;
+      }
+      state.history.slice(0, 12).forEach(h=>{
+        const d = new Date(h.ts);
+        const row = document.createElement('div');
+        row.className='flex items-center justify-between p-3 rounded-xl bg-slate-50';
+        row.innerHTML = `
+          <div>
+            <div class="font-black text-[var(--dark)]">${h.label}</div>
+            <div class="text-[12px] text-slate-500">${d.toLocaleString('fr-FR')}</div>
+          </div>
+          <div class="chip">${h.type}</div>
+        `;
+        list.appendChild(row);
+      });
+    }
+
+    // ==============================
+    // Settings
+    // ==============================
+
+    function renderSettings(){
+      if(state.tab!=='settings') return;
+      const tSound = document.getElementById('toggleSound');
+      const tAnim = document.getElementById('toggleAnim');
+      const tIPA = document.getElementById('toggleIPA');
+
+      tSound.classList.toggle('on', !!state.settings.sound);
+      tAnim.classList.toggle('on', !!state.settings.animations);
+      tIPA.classList.toggle('on', !!state.settings.showIPA);
+
+      tSound.onclick = ()=>{state.settings.sound=!state.settings.sound;saveAll();renderSettings();};
+      tAnim.onclick = ()=>{state.settings.animations=!state.settings.animations;saveAll();renderSettings();};
+      tIPA.onclick = ()=>{state.settings.showIPA=!state.settings.showIPA;saveAll();if(state.mode==='practice' && document.getElementById('wordScreen').classList.contains('active')) renderWord();};
+
+      document.getElementById('resetProgressBtn').onclick = ()=>{
+        state.practiceProgress = {};
+        state.uniProgress = {};
+        saveAll();
+        renderPracticeModules();
+        renderUniversityCategories();
+        renderStats();
+        updateProgressBar();
+        showModal('Progression réinitialisée', "Tes progrès (pratique + universitaire) ont été effacés.");
+      };
+      document.getElementById('resetAllBtn').onclick = ()=>{
+        localStorage.removeItem(LS_KEYS.practice);
+        localStorage.removeItem(LS_KEYS.uni);
+        localStorage.removeItem(LS_KEYS.settings);
+        localStorage.removeItem(LS_KEYS.streak);
+        localStorage.removeItem(LS_KEYS.history);
+        location.reload();
+      };
+
+      document.getElementById('exportBtn').onclick = ()=>{
+        const blob = new Blob([JSON.stringify({
+          practiceProgress: state.practiceProgress,
+          uniProgress: state.uniProgress,
+          settings: state.settings,
+          streak: state.streak,
+          history: state.history
+        }, null, 2)], {type:'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `maltish_backup_${isoDate()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      };
+
+      document.getElementById('importBtn').onclick = ()=> document.getElementById('importFile').click();
+      document.getElementById('importFile').onchange = (e)=>{
+        const f = e.target.files?.[0];
+        if(!f) return;
+        const reader = new FileReader();
+        reader.onload = ()=>{
+          try{
+            const data = JSON.parse(reader.result);
+            if(data.practiceProgress) state.practiceProgress = data.practiceProgress;
+            if(data.uniProgress) state.uniProgress = data.uniProgress;
+            if(data.settings) state.settings = {...state.settings, ...data.settings};
+            if(data.streak) state.streak = {...state.streak, ...data.streak};
+            if(data.history) state.history = data.history;
+            saveAll();
+            renderPracticeModules();
+            renderUniversityCategories();
+            renderSettings();
+            renderStats();
+            updateProgressBar();
+            showModal('Import réussi', 'Données importées avec succès.');
+          } catch(err){
+            showModal('Import impossible', "Le fichier n'est pas valide.");
+          }
+        };
+        reader.readAsText(f);
+      };
+    }
+
+    // ==============================
+    // Progress bar
+    // ==============================
+
+    function updateProgressBar(){
+      const fill = document.getElementById('progressFill');
+      const label = document.getElementById('progressLabel');
+      const pctEl = document.getElementById('progressPercent');
+
+      if(state.tab !== 'learn'){
+        // show overall
+        const practiceCompleted = practiceModules.filter(m=>state.practiceProgress[m.id]?.completed).length;
+        const practiceTotal = practiceModules.length;
+        let uniTotal = 0;
+        Object.values(universityCategories).forEach(cat=> uniTotal += cat.lessons.length);
+        const uniCompleted = Object.keys(state.uniProgress).filter(k=>state.uniProgress[k]?.completed).length;
+        const overallTotal = practiceTotal + uniTotal;
+        const overallCompleted = practiceCompleted + uniCompleted;
+        const pct = overallTotal ? Math.round((overallCompleted/overallTotal)*100) : 0;
+        fill.style.width = pct + '%';
+        label.textContent = `Global : ${overallCompleted} / ${overallTotal}`;
+        pctEl.textContent = pct + '%';
+        return;
+      }
+
+      if(state.mode==='practice'){
+        const completed = practiceModules.filter(m=>state.practiceProgress[m.id]?.completed).length;
+        const total = practiceModules.length;
+        const pct = total ? Math.round((completed/total)*100) : 0;
+        fill.style.width = pct + '%';
+        label.textContent = `${completed} / ${total} modules`;
+        pctEl.textContent = pct + '%';
+      } else {
+        let total=0;
+        Object.values(universityCategories).forEach(cat=> total += cat.lessons.length);
+        const completed = Object.keys(state.uniProgress).filter(k=>state.uniProgress[k]?.completed).length;
+        const pct = total ? Math.round((completed/total)*100) : 0;
+        fill.style.width = pct + '%';
+        label.textContent = `${completed} / ${total} leçons`;
+        pctEl.textContent = pct + '%';
+      }
+    }
+
+    // ==============================
+    // Pasti
+    // ==============================
+
+    function pastiSpeak(){
+      const phrase = pastiPhrases[Math.floor(Math.random()*pastiPhrases.length)];
+      document.getElementById('pastiSpeech').textContent = phrase;
+    }
+
+    function pastiPraise(){
+      const praises = [
+        'Prosit! Tajjeb ħafna! 👏',
+        'Brava/Bravo! Kompli hekk! ⭐',
+        'Perfett! Issa għaddi għall-pass li jmiss.',
+        'Eċċellenti! Int qed titgħallem malajr.'
+      ];
+      document.getElementById('pastiSpeech').textContent = praises[Math.floor(Math.random()*praises.length)];
+    }
+
+    // ==============================
+    // Wiring
+    // ==============================
+
+    function init(){
+      loadAll();
+      document.getElementById('streakCount').textContent = String(state.streak.count||0);
+
+      // mode buttons
+      document.getElementById('modePracticeBtn').addEventListener('click', ()=> setMode('practice'));
+      document.getElementById('modeUniBtn').addEventListener('click', ()=> setMode('university'));
+
+      // bottom nav
+      document.querySelectorAll('#bottomNav .nav').forEach(n=>{
+        n.addEventListener('click', ()=> showTab(n.dataset.tab));
+      });
+
+      // back
+      document.getElementById('backBtn').addEventListener('click', goBack);
+
+      // modal
+      document.getElementById('modalClose').addEventListener('click', closeModal);
+      document.getElementById('modalBack').addEventListener('click', (e)=>{ if(e.target.id==='modalBack') closeModal(); });
+
+      // pasti
+      document.getElementById('pastiBtn').addEventListener('click', ()=>{pastiSpeak();});
+
+      // review pill
+      document.querySelectorAll('#reviewModePill button').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          document.querySelectorAll('#reviewModePill button').forEach(x=>x.classList.remove('active'));
+          b.classList.add('active');
+          renderReview();
+        });
+      });
+
+      renderPracticeModules();
+      renderUniversityCategories();
+      renderStats();
+      renderSettings();
+      updateProgressBar();
+
+      showTab('learn');
+      showLearnHome();
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+
+    // ==============================
+    // PWA (service worker)
+    // ==============================
+    (function registerSW(){
+      if(!('serviceWorker' in navigator)) return;
+      window.addEventListener('load', async ()=>{
+        try{
+          await navigator.serviceWorker.register('./sw.js', {scope:'./'});
+        }catch(e){
+          console.warn('SW registration failed', e);
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
